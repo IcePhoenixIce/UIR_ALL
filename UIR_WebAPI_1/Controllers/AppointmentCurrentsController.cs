@@ -81,40 +81,34 @@ namespace UIR_WebAPI_1.Controllers
 		  {
 			  return Problem("Entity set 'UirDbContext.AppointmentCurrents'  is null.");
 		  }
-			bool fl=true;
-
-            var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             if (appointmentCurrent.From1.TimeOfDay >= appointmentCurrent.To1.TimeOfDay)
                 return BadRequest(-1);
+            var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             var SpecView = await _context.Specialists
                 .Include(spec => spec.SheduleTables)
                 .Include(spec => spec.AppointmentCurrents)
-                .Where(spec => spec.SpecialistId == appointmentCurrent.SpecialistId).ToListAsync();
+                .Where(spec => spec.SpecialistId == appointmentCurrent.SpecialistId)
+				.ToListAsync();
             if (SpecView == null)
                 return BadRequest(1);
             foreach (var i in SpecView[0].SheduleTables)
             {
                 if (i.WeekdayId == (int)appointmentCurrent.From1.DayOfWeek)
-                    if ((i.From1 <= appointmentCurrent.From1.TimeOfDay &&
+                    if (!((i.From1 <= appointmentCurrent.From1.TimeOfDay &&
                         i.LunchStart >= appointmentCurrent.To1.TimeOfDay) ||
                         (i.LunchEnd <= appointmentCurrent.From1.TimeOfDay &&
-                        i.To1 >= appointmentCurrent.To1.TimeOfDay))
+                        i.To1 >= appointmentCurrent.To1.TimeOfDay)))
                     {
-                        fl = false;
-                        break;
+                        return BadRequest(2);
                     }
             }
-            if (fl)
-                return BadRequest(2);
-            foreach (var i in SpecView[0].AppointmentCurrents)
+			foreach (var i in SpecView[0].AppointmentCurrents)
             {
                 if (i.From1.Date == appointmentCurrent.From1.Date)
                     if (!(i.To1.TimeOfDay <= appointmentCurrent.From1.TimeOfDay ||
                         i.From1.TimeOfDay >= appointmentCurrent.To1.TimeOfDay))
-                        fl = true;
-            }
-            if (fl)
-                return BadRequest(3);
+                        return BadRequest(3);
+            }   
             await _context.AppointmentCurrents.AddAsync(appointmentCurrent);
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();

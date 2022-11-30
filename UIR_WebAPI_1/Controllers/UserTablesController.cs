@@ -20,7 +20,7 @@ namespace UIR_WebAPI_1.Controllers
             _context = context;
         }
 
-/*        // GET: api/UserTables
+        // GET: api/UserTables
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserTable>>> GetUserTables()
         {
@@ -30,7 +30,7 @@ namespace UIR_WebAPI_1.Controllers
           }
             return await _context.UserTables.ToListAsync();
         }
-*/
+
         // GET: api/UserTables/5
         [HttpGet("{id}")]
         public async Task<ActionResult<UserTable>> GetUserTable(int id)
