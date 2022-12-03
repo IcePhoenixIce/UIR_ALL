@@ -21,7 +21,7 @@ public partial class RecordEnded
 
     public virtual RatingScale? Rating { get; set; }
 
-    public virtual Room Room { get; set; } = null!;
+    public virtual Room? Room { get; set; }
 
-    public virtual UserTable UserUir { get; set; } = null!;
+    public virtual UserTable? UserUir { get; set; }
 }

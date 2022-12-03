@@ -9,13 +9,13 @@ public partial class SheduleTable
 
     public int WeekdayId { get; set; }
 
-    public TimeSpan? From1 { get; set; }
+    public TimeSpan From1 { get; set; }
 
-    public TimeSpan? To1 { get; set; }
+    public TimeSpan To1 { get; set; }
 
-    public TimeSpan? LunchStart { get; set; }
+    public TimeSpan LunchStart { get; set; }
 
-    public TimeSpan? LunchEnd { get; set; }
+    public TimeSpan LunchEnd { get; set; }
 
     public virtual Specialist? Specialist { get; set; }
 

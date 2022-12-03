@@ -11,7 +11,7 @@ public partial class InvitesEnded
 
     public string? AdditionalInfo { get; set; }
 
-    public virtual RecordEnded Record { get; set; } = null!;
+    public virtual RecordEnded? Record { get; set; }
 
-    public virtual UserTable UserUir { get; set; } = null!;
+    public virtual UserTable? UserUir { get; set; }
 }

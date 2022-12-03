@@ -62,7 +62,7 @@ public partial class UirDbContext : DbContext
 
         modelBuilder.Entity<InvitesCurrent>(entity =>
         {
-            entity.HasKey(e => e.RecordId).HasName("PK__Invites___603A0C60F5A44F83");
+            entity.HasKey(e => new { e.RecordId, e.UserUirId }).HasName("PK_Invites_Current");
 
             entity.ToTable("Invites_Current");
 
@@ -86,7 +86,7 @@ public partial class UirDbContext : DbContext
 
         modelBuilder.Entity<InvitesEnded>(entity =>
         {
-            entity.HasKey(e => e.RecordId).HasName("PK__Invites___603A0C6015205620");
+            entity.HasKey(e => new { e.RecordId, e.UserUirId }).HasName("PK_Invites_Ended");
 
             entity.ToTable("Invites_Ended");
 

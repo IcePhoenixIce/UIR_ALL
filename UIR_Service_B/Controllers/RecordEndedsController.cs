@@ -20,6 +20,7 @@ namespace UIR_Service_B.Controllers
             _context = context;
         }
 
+        //get all for userId
         // GET: api/RecordEndeds/5
         [HttpGet("{id}")]
         public async Task<ActionResult<IEnumerable<RecordEnded>>> GetRecordEnded(int id)
@@ -36,6 +37,26 @@ namespace UIR_Service_B.Controllers
             }
 
             return recordsEnded;
+        }
+
+        //get rating for roomID
+        // GET: api/RecordEndeds/Room/5
+        [HttpGet("Room/{id}")]
+        public async Task<ActionResult<double>> GetRecordEndedRoomRating(int id)
+        {
+            if (_context.RecordEndeds == null)
+            {
+                return NotFound();
+            }
+            var rating = await _context.RecordEndeds
+                .Where(rec => rec.RoomId == id)
+                .AverageAsync(rec => rec.RatingId);
+            if (rating == null)
+            {
+                return NotFound();
+            }
+
+            return rating;
         }
 
         // PUT: api/RecordEndeds/5

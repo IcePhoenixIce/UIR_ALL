@@ -11,7 +11,7 @@ public partial class InvitesCurrent
 
     public string? AdditionalInfo { get; set; }
 
-    public virtual RecordCurrent Record { get; set; } = null!;
+    public virtual RecordCurrent? Record { get; set; }
 
-    public virtual UserTable UserUir { get; set; } = null!;
+    public virtual UserTable? UserUir { get; set; }
 }

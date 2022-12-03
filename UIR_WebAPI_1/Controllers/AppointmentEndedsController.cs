@@ -20,8 +20,8 @@ namespace UIR_WebAPI_1.Controllers
             _context = context;
         }
 
-        // GET: api/AppointmentEndeds/5
-        [HttpGet("user/{id}")]
+        // GET: api/AppointmentEndeds/User/5
+        [HttpGet("User/{id}")]
         public async Task<ActionResult<IEnumerable<AppointmentEnded>>> GetAppointmentEnded(int id)
         {
           if (_context.AppointmentEndeds == null)
@@ -29,6 +29,20 @@ namespace UIR_WebAPI_1.Controllers
               return NotFound();
           }
             return await _context.AppointmentEndeds.Where(ae => ae.UserUirId == id).ToListAsync();
+        }
+
+        // GET: api/AppointmentEndeds/Rating/5
+        [HttpGet("Rating/{id}")]
+        public async Task<ActionResult<double>> GetAppointmentEndedRating(int id)
+        {
+            if (_context.AppointmentEndeds == null)
+            {
+                return NotFound();
+            }
+            var rating = await _context.AppointmentEndeds.Where(ae => ae.SpecialistId == id).AverageAsync(ae => ae.RatingId);
+            if (rating == null)
+                return NotFound();
+            return rating;
         }
 
         // PUT: api/AppointmentEndeds/5
