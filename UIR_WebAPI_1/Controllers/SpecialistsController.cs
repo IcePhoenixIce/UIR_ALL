@@ -28,7 +28,7 @@ namespace UIR_WebAPI_1.Controllers
           {
               return NotFound();
           }
-            return await _context.Specialists.ToListAsync();
+            return await _context.Specialists.Include(user => user.SpecialistNavigation).ToListAsync();
         }
 
         // GET: api/Specialists/5
@@ -40,6 +40,7 @@ namespace UIR_WebAPI_1.Controllers
               return NotFound();
           }
             var specialist = await _context.Specialists
+                .Include(user => user.SpecialistNavigation)
                 .Include(specialist => specialist.SheduleTables)
                 .Include(specialist => specialist.AppointmentCurrents)
                 .Where(specialist => specialist.SpecialistId == id)

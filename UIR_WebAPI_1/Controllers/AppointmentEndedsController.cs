@@ -45,9 +45,9 @@ namespace UIR_WebAPI_1.Controllers
             return rating;
         }
 
-        // PUT: api/AppointmentEndeds/5
+        // PUT: api/AppointmentEndeds/User5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("user/{id}")]
+        [HttpPut("User/{id}")]
         public async Task<IActionResult> PutAppointmentEnded(int id, AppointmentEnded appointmentEnded)
         {
             if (id != appointmentEnded.AppointmentId)

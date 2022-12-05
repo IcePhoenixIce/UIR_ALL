@@ -100,7 +100,7 @@ namespace UIR_WebAPI_1.Controllers
             return CreatedAtAction(nameof(GetUserTable), new { id = userTable.UserUirId }, userTable);
         }
 
-        // DELETE: api/UserTables/5
+/*        // DELETE: api/UserTables/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUserTable(int id)
         {
@@ -118,7 +118,7 @@ namespace UIR_WebAPI_1.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
+        }*/
 
         private bool UserTableExists(int id)
         {

@@ -19,7 +19,7 @@ namespace UIR_WebAPI_1.Controllers
 		{
 			_context = context;
 		}
-        // GET: api/AppointmentCurrents/User/5
+        // GET: api/AppointmentCurrents/5
         [HttpGet("{id}")]
         public async Task<ActionResult<AppointmentCurrent>> GetAppointmentCurrent(int id)
         {
@@ -55,7 +55,8 @@ namespace UIR_WebAPI_1.Controllers
 			return appointmentCurrents;
 		}
 
-		[HttpGet("Specialist/{id}")]
+        // GET: api/AppointmentCurrents/Specialist/5
+        [HttpGet("Specialist/{id}")]
 		public async Task<ActionResult<IEnumerable<AppointmentCurrent>>> GetAppointmentCurrentSpec(int id)
 		{
 			if (_context.AppointmentCurrents == null)
