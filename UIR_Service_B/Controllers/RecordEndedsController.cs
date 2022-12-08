@@ -29,7 +29,10 @@ namespace UIR_Service_B.Controllers
           {
               return NotFound();
           }
-            var recordsEnded = await _context.RecordEndeds.Where(rec => rec.UserUirId == id).ToListAsync();
+            var recordsEnded = await _context.RecordEndeds
+                .Include(rec => rec.InvitesEnded)
+                .Where(rec => rec.UserUirId == id)
+                .ToListAsync();
 
             if (recordsEnded == null)
             {

@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using UIR_WebAPI_1.Models;
+using UIR_Service_B.Models;
 
-namespace UIR_WebAPI_1.Controllers
+namespace UIR_Service_B.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -28,7 +28,7 @@ namespace UIR_WebAPI_1.Controllers
           {
               return NotFound();
           }
-            return await _context.UserTables.Include(ut => ut.Specialist).ToListAsync();
+            return await _context.UserTables.ToListAsync();
         }
 
         // GET: api/UserTables/5

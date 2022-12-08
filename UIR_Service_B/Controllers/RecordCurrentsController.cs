@@ -21,7 +21,7 @@ namespace UIR_Service_B.Controllers
         }
 
         // GET: api/RecordCurrents/user/5
-        [HttpGet("user/{id}")]
+        [HttpGet("User/{id}")]
         public async Task<ActionResult<IEnumerable<RecordCurrent>>> GetRecordCurrent(int id)
         {
           if (_context.RecordCurrents == null)
@@ -51,7 +51,6 @@ namespace UIR_Service_B.Controllers
           {
               return Problem("Entity set 'UirDbContext.RecordCurrents'  is null.");
           }
-            bool fl = false;
             if (recordCurrent.From1.TimeOfDay >= recordCurrent.To1.TimeOfDay)
                 return BadRequest(-1);
             var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
@@ -112,7 +111,7 @@ namespace UIR_Service_B.Controllers
         }
 
         // DELETE: api/RecordCurrents/user/5
-        [HttpDelete("user/{id}")]
+        [HttpDelete("User/{id}")]
         public async Task<IActionResult> DeleteRecordCurrentUser(int id)
         {
             if (_context.RecordCurrents == null)

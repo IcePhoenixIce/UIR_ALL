@@ -48,10 +48,40 @@ namespace UIR_Service_B.Controllers
             {
                 return Problem("Entity set 'UirDbContext.InvitesCurrents'  is null.");
             }
-            _context.InvitesCurrents.Add(invitesCurrent);
-            try
+            try 
             {
+                var rec = await _context.RecordCurrents
+                    .SingleAsync(rec => rec.RecordId == invitesCurrent.RecordId);
+                if (!(rec.From1.TimeOfDay >= rec.To1.TimeOfDay))
+                    return BadRequest("From > To");
+                var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+                var userInfo = await _context.UserTables
+                    .Include(us => us.RecordCurrents)
+                    .Include(us => us.InvitesCurrents)
+                        .ThenInclude(inv => inv.Record)
+                    .SingleAsync(us => us.UserUirId == invitesCurrent.UserUirId);
+
+                foreach (var i in userInfo.RecordCurrents)
+                {
+                    if (i.From1.Date == rec.From1.Date)
+                        if (!(i.From1.TimeOfDay >= rec.To1.TimeOfDay &&
+                            i.To1.TimeOfDay <= rec.From1.TimeOfDay))
+                        {
+                            return BadRequest("User have a room on this time");
+                        }
+                }
+                foreach (var i in userInfo.InvitesCurrents)
+                {
+                    if (i.Record.From1.Date == rec.From1.Date)
+                        if (!(i.Record.From1.TimeOfDay >= rec.To1.TimeOfDay &&
+                            i.Record.To1.TimeOfDay <= rec.From1.TimeOfDay))
+                        {
+                            return BadRequest("User have another invite on this time");
+                        }
+                }
+                _context.InvitesCurrents.Add(invitesCurrent);
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
             }
             catch (DbUpdateException)
             {
