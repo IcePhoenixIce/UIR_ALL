@@ -1,0 +1,125 @@
+﻿@layout CentredCardLayout
+@page "/SignUp"
+@using System.Text;
+@using System.Security.Cryptography;
+@using WebAppBlazor.Data;
+@using WebAppBlazor.Data.Models;
+@using Newtonsoft.Json;
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject HttpClient http
+
+			<EditForm Model="@user" OnValidSubmit="@ValidateUser">
+				<div>
+					<br /><br />
+				</div>
+				<div>
+					<h3 style="font-weight:bold; color:purple">Book Stores Login</h3>
+				</div>
+				<div>
+					<br />
+				</div>
+				<div class="col-12 row"style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
+					<input class="form-control col-8" @bind="user.FirstName" placeholder="Имя"  style="width:300px"/>
+				</div>
+				<br />
+				<div class="col-12 row" style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
+					<input class="form-control col-8" @bind="user.LastName" placeholder="Фамилия" style="width:300px"/>
+				</div>
+				<br />
+				<div class="col-12 row" style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
+					<input class="form-control col-8" @bind="user.MiddleName" placeholder="Отчесвто" style="width:300px" />
+				</div>
+				<br />
+				<div class="col-12 row"style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
+					<input class="form-control col-8" @bind="user.PhoneNumber" placeholder="+7 ХХХ ХХХ ХХ ХХ"  style="width:300px"/>
+				</div>
+				<br />
+				<div class="col-12 row" style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
+					<input type="email" class="form-control col-8" @bind="user.EMail" placeholder="e-mail" style="width:300px"/>
+				</div>
+				<br />
+				<div class="col-12 row"style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
+					<input class="form-control col-8" @bind="user.Pass.UserLogin" placeholder="Логин" style="width:300px"/>
+				</div>
+				<br />
+				<div class="col-12 row" style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
+					<input type="password" class="form-control col-8" @bind="user.Pass.PasswordHash" placeholder="Пароль" style="width:300px"/>
+				</div>
+				<br />
+				<div class="col-12 row" style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
+					<input type="password" class="form-control col-8" @bind="pass" placeholder="Подтвердите пароль" style="width:300px"/>
+				</div>
+				<br />
+				<div class="col-12 row" style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
+					<span class="col-8"></span>
+					<input type="submit" class="form-control col-6 btn btn-primary" value="Зарегистрироваться" style="width:300px"/>
+					<div class="col-12 row" ></div>
+					<a href="/Login" style="width:fit-content">Уже есть аккаунт? Войдите в него!</a>
+				</div>
+				<br />
+				<ValidationMess IsVisible="IsVisible" result="1" renderFragment="@LoginMessadge"/>
+			</EditForm>
+
+
+@code {
+
+	private UserTable user;
+	private string pass;
+
+	public string LoginMessadge { get; set; }
+
+	public bool IsVisible { get; set; }
+
+	protected override Task OnInitializedAsync()
+	{
+		user = new UserTable();
+		user.Pass = new Pass();
+		return base.OnInitializedAsync();
+	}
+
+	private async Task<bool> ValidateUser()
+	{
+		if (pass != user.Pass.PasswordHash)
+		{ 
+			LoginMessadge = "Неправильный логин или пароль!";
+			IsVisible = true;
+			return await Task.FromResult(false);
+		}
+		try
+		{
+			byte[] bytes = Encoding.UTF8.GetBytes(user.Pass.PasswordHash);
+			SHA256Managed hashstring = new SHA256Managed();
+			byte[] hash = hashstring.ComputeHash(bytes);
+			string hashString = string.Empty;
+			foreach (byte x in hash)
+			{
+				hashString += String.Format("{0:x2}", x);
+			}
+			UserTable user2 = new UserTable();
+			user2.Pass = new Pass();
+			user2.Pass.PasswordHash = hashString;
+
+			var mess = await http.PostAsJsonAsync<UserTable>("https://localhost:7057/api/Passes/Login", user2);
+			var responseStatusCode = mess.StatusCode;
+			if (responseStatusCode == System.Net.HttpStatusCode.OK)
+			{
+				NavigationManager.NavigateTo("/Login");
+				return await Task.FromResult(true);
+			}
+			else
+			{
+				LoginMessadge = "Данный логин уже занят. Попробуйте другой!";
+				IsVisible = true;
+				return await Task.FromResult(false);
+			}
+		}
+		catch (Exception ex)
+		{
+			LoginMessadge = "Не удалось подключится к серверу! Повторите попытку позже.";
+			IsVisible = true;
+			return await Task.FromResult(false);
+		}
+	}
+}

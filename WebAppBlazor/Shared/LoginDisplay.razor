@@ -1,0 +1,20 @@
+﻿@using WebAppBlazor.Data
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<AuthorizeView>
+    <Authorized>
+        <a href="Identity/Account/Manage">Hello, @context.User.Identity?.Name!</a>
+        <a href="/" @onclick="(() => Logout())">Log out</a>
+    </Authorized>
+    <NotAuthorized>
+        <a href="/SignUp">Register</a>
+        <a href="/Login">Log in</a>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code{
+    public void Logout()
+    {
+        ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsLoggedOut();
+    }
+}

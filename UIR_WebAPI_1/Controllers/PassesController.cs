@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using UIR_WebAPI_1.Models;
-using static System.Net.Mime.MediaTypeNames;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using UIR_Service_A.Models;
@@ -39,16 +38,6 @@ namespace UIR_WebAPI_1.Controllers
             {
                 return BadRequest("Invalid client request");
             }
-            //Сделаю это в веб-приложении, сейчас заглушка тут
-            byte[] bytes = Encoding.UTF8.GetBytes(pass.PasswordHash);
-            SHA256Managed hashstring = new SHA256Managed();
-            byte[] hash = hashstring.ComputeHash(bytes);
-            string hashString = string.Empty;
-            foreach (byte x in hash)
-            {
-                hashString += String.Format("{0:x2}", x);
-            }
-            pass.PasswordHash = hashString;
             var pass1 = await _context.Passes
                 .Include(p => p.UserUir)
                 .Where(p => p.UserLogin == pass.UserLogin
@@ -90,16 +79,7 @@ namespace UIR_WebAPI_1.Controllers
             {
                 return BadRequest();
             }
-            //Сделаю это в веб-приложении, сейчас заглушка тут
-            byte[] bytes = Encoding.UTF8.GetBytes(pass.PasswordHash);
-            SHA256Managed hashstring = new SHA256Managed();
-            byte[] hash = hashstring.ComputeHash(bytes);
-            string hashString = string.Empty;
-            foreach (byte x in hash)
-            {
-                hashString += String.Format("{0:x2}", x);
-            }
-            pass.PasswordHash = hashString;
+
             _context.Entry(pass).State = EntityState.Modified;
 
             try

@@ -5,7 +5,7 @@ namespace UIR_WebAPI_1.Models;
 
 public partial class Pass
 {
-    public int UserUirId { get; set; }
+    public int? UserUirId { get; set; }
 
     public string UserLogin { get; set; } = null!;
 

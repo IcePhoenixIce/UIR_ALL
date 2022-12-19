@@ -5,7 +5,9 @@ VisualStudioVersion = 17.4.33110.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UIR_Service_A", "UIR_WebAPI_1\UIR_Service_A.csproj", "{E6A782D1-0F1F-4A6C-A1E2-77A8C85AD77C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UIR_Service_B", "UIR_Service_B\UIR_Service_B.csproj", "{4D0EA457-7C6F-4D8C-B808-0B6B4126C3B3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UIR_Service_B", "UIR_Service_B\UIR_Service_B.csproj", "{4D0EA457-7C6F-4D8C-B808-0B6B4126C3B3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebAppBlazor", "WebAppBlazor\WebAppBlazor.csproj", "{0CABD912-016F-468F-8EBB-F960FBC11349}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{4D0EA457-7C6F-4D8C-B808-0B6B4126C3B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D0EA457-7C6F-4D8C-B808-0B6B4126C3B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D0EA457-7C6F-4D8C-B808-0B6B4126C3B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CABD912-016F-468F-8EBB-F960FBC11349}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CABD912-016F-468F-8EBB-F960FBC11349}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CABD912-016F-468F-8EBB-F960FBC11349}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CABD912-016F-468F-8EBB-F960FBC11349}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

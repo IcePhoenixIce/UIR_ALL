@@ -1,0 +1,36 @@
+﻿@if (IsVisible)
+{
+	switch (result)
+	{
+		case 0:
+			<div id="divValidationAlert" class="col-10 alert alert-info">
+				<span>@renderFragment</span>
+			</div>
+			break;
+		case 1:
+			<div id="divValidationError" class="col-10 alert alert-danger">
+				<span>@renderFragment</span>
+			</div>
+			break;
+		default:
+			<div id="divValidationError" class="col-10 alert alert-danger">
+				<span>Оой, что-то пошло не так, сообщите об ошибке </span>
+			</div>
+			break;
+
+
+	}
+
+
+
+
+}
+@code {
+	[Parameter]
+	public bool IsVisible { get; set; }	
+	[Parameter]
+	public string renderFragment { get; set; }
+	[Parameter]
+	public int result { get; set; }
+
+}

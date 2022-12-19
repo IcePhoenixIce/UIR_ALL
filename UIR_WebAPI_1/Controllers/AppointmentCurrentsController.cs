@@ -85,7 +85,11 @@ namespace UIR_WebAPI_1.Controllers
 			  return Problem("Entity set 'UirDbContext.AppointmentCurrents'  is null.");
 		  }
             if (appointmentCurrent.From1.TimeOfDay >= appointmentCurrent.To1.TimeOfDay)
-                return BadRequest(-1);
+                return BadRequest("Время начало больше времени окончания приема");
+
+			//Затычка
+            if (appointmentCurrent.From1.Date >= DateTime.Now.Date.AddDays(7))
+                return BadRequest("Можно записываться только на следующие ближайшие 6 дней");
             var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             var SpecView = await _context.Specialists
                 .Include(spec => spec.SheduleTables)

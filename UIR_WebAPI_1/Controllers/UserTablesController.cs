@@ -10,7 +10,7 @@ using UIR_WebAPI_1.Models;
 
 namespace UIR_WebAPI_1.Controllers
 {
-    [Authorize]
+    
     [Route("api/[controller]")]
     [ApiController]
     public class UserTablesController : ControllerBase
@@ -22,8 +22,9 @@ namespace UIR_WebAPI_1.Controllers
             _context = context;
         }
 
-        // GET: api/UserTables
-        [HttpGet]
+		// GET: api/UserTables
+		[Authorize]
+		[HttpGet]
         public async Task<ActionResult<IEnumerable<UserTable>>> GetUserTables()
         {
           if (_context.UserTables == null)
@@ -33,8 +34,9 @@ namespace UIR_WebAPI_1.Controllers
             return await _context.UserTables.Include(ut => ut.Specialist).ToListAsync();
         }
 
-        // GET: api/UserTables/5
-        [HttpGet("{id}")]
+		// GET: api/UserTables/5
+		[Authorize]
+		[HttpGet("{id}")]
         public async Task<ActionResult<UserTable>> GetUserTable(int id)
         {
           if (_context.UserTables == null)
@@ -54,9 +56,10 @@ namespace UIR_WebAPI_1.Controllers
             return userTable;
         }
 
-        // PUT: api/UserTables/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
+		// PUT: api/UserTables/5
+		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+		[Authorize]
+		[HttpPut("{id}")]
         public async Task<IActionResult> PutUserTable(int id, UserTable userTable)
         {
             if (id != userTable.UserUirId)

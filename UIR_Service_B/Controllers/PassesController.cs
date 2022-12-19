@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UIR_Service_B.Models;
-using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -37,16 +36,6 @@ namespace UIR_Service_B.Controllers
             {
                 return BadRequest("Invalid client request");
             }
-            //Сделаю это в веб-приложении, сейчас заглушка тут
-            byte[] bytes = Encoding.UTF8.GetBytes(pass.PasswordHash);
-            SHA256Managed hashstring = new SHA256Managed();
-            byte[] hash = hashstring.ComputeHash(bytes);
-            string hashString = string.Empty;
-            foreach (byte x in hash)
-            {
-                hashString += String.Format("{0:x2}", x);
-            }
-            pass.PasswordHash = hashString;
             var pass1 = await _context.Passes
                 .Include(p => p.UserUir)
                 .Where(p => p.UserLogin == pass.UserLogin
@@ -88,15 +77,6 @@ namespace UIR_Service_B.Controllers
             {
                 return BadRequest();
             }
-            byte[] bytes = Encoding.UTF8.GetBytes(pass.PasswordHash);
-            SHA256Managed hashstring = new SHA256Managed();
-            byte[] hash = hashstring.ComputeHash(bytes);
-            string hashString = string.Empty;
-            foreach (byte x in hash)
-            {
-                hashString += String.Format("{0:x2}", x);
-            }
-            pass.PasswordHash = hashString;
             _context.Entry(pass).State = EntityState.Modified;
 
             try
