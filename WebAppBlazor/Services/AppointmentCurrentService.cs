@@ -17,20 +17,6 @@ namespace WebAppBlazor.Services
 			_localStorageService = localStorageService;
         }
 
-        public async Task<bool> SignUpAsync(UserTable user)
-        {
-			var requstMassage = new HttpRequestMessage(HttpMethod.Post, "UserTables");
-			var response = await _httpClient.SendAsync(requstMassage);
-			var responseStatusCode = response.StatusCode;
-			if (responseStatusCode == System.Net.HttpStatusCode.Created)
-			{
-				var responseBody = await response.Content.ReadAsStringAsync();
-				var returned_user = JsonConvert.DeserializeObject<PassToken>(responseBody);
-				return await Task.FromResult(true);
-			}
-			return await Task.FromResult(false);
-		}
-
 		public async Task<IEnumerable<AppointmentCurrent>?> UserAsync(int id) 
 		{
 			var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"User/{id}");

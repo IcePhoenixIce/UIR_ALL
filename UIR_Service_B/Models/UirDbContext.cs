@@ -75,8 +75,8 @@ public partial class UirDbContext : DbContext
                 .HasColumnName("Additional_Info");
             entity.Property(e => e.UserUirId).HasColumnName("UserUIR_ID");
 
-            entity.HasOne(d => d.Record).WithOne(p => p.InvitesCurrent)
-                .HasForeignKey<InvitesCurrent>(d => d.RecordId)
+            entity.HasOne(d => d.Record).WithMany(p => p.InvitesCurrent)
+                .HasForeignKey(d => d.RecordId)
                 .HasConstraintName("R_25");
 
             entity.HasOne(d => d.UserUir).WithMany(p => p.InvitesCurrents)
@@ -99,8 +99,8 @@ public partial class UirDbContext : DbContext
                 .HasColumnName("Additional_Info");
             entity.Property(e => e.UserUirId).HasColumnName("UserUIR_ID");
 
-            entity.HasOne(d => d.Record).WithOne(p => p.InvitesEnded)
-                .HasForeignKey<InvitesEnded>(d => d.RecordId)
+            entity.HasOne(d => d.Record).WithMany(p => p.InvitesEnded)
+                .HasForeignKey(d => d.RecordId)
                 .HasConstraintName("R_36");
 
             entity.HasOne(d => d.UserUir).WithMany(p => p.InvitesEndeds)

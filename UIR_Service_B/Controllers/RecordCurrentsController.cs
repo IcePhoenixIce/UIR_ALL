@@ -33,6 +33,8 @@ namespace UIR_Service_B.Controllers
             var recordCurrent = await _context.RecordCurrents
                 .Include(rec => rec.InvitesCurrent)
                     .ThenInclude(inv=> inv.UserUir)
+                .Include(rec=>rec.Room)
+                    .ThenInclude(rec=>rec.Area)
                 .Where(rec => rec.UserUirId == id)
                 .ToListAsync();
 

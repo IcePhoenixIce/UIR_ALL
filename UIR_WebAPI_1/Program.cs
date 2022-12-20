@@ -1,11 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using UIR_WebAPI_1.Models;
-using System.Resources;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using UIR_Service_A.Models;
-using System.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;

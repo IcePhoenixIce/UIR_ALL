@@ -1,5 +1,4 @@
-﻿@layout CentredCardLayout
-@page "/User/Appointmets"
+﻿@page "/User/Appointmets"
 @using WebAppBlazor.Data;
 @using WebAppBlazor.Data.Models;
 @using WebAppBlazor.Services;
@@ -8,27 +7,33 @@
 @inject NavigationManager NavigationManager
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject IAppointmentCurrentService acs
+@inject IRecordsCurrentService rcs
 
 
-<RadzenDataList WrapItems="true" AllowPaging="false" Data="@appointments" TItem="AppointmentCurrent">
+<RadzenDataList WrapItems="true" AllowPaging="false" Data="@acrcList" TItem="(AppointmentCurrent, RecordCurrent)">
         <Template Context="order">
             <RadzenCard Style="width:300px;">
                 <div class="d-flex flex-row align-items-center">
+                    <div >
+                        <h4 class="mb-0">@(@order.Item1.Specialist.SpecialistNavigation.FirstName + " " + @order.Item1.Specialist.SpecialistNavigation.LastName)</h4>
+                        <div>@order.Item1.Specialist.Specialization</div>
+                        <br/>
+                        <h7 class="mb-0" style="color:forestgreen">@(@order.Item1.From1.ToString() + " - " + @order.Item1.To1.ToString())</h7>
+                    </div>
                     <div>
-                        <h4 class="mb-0">@(@order.Specialist.SpecialistNavigation.FirstName + " "  + @order.Specialist.SpecialistNavigation.LastName)</h4>
-                        <div>@order.Specialist.Specialization</div>
-@*                      <div style="font-size: .8em">@(order.), @(order.ShipCountry)</div>*@
-                </div>
+                        
+                    </div>
                 </div>
                 <hr style="border: none; background-color: rgba(0,0,0,.08); height: 1px; margin: 1rem 0;" />
                 <div class="row">
+                    <div style="font-size: .8em">Адрес: @(order.Item2.Room.Area.AreaLocation), @(order.Item2.Room.Area.AreaName). Комната: @(order.Item2.Room.RoomNumber)</div>
 @*                    <div class="col-md-8 text-truncate">
                         <b>@(order.ShipName)</b>
                     </div>*@
 @*                    <div class="col-md-4 text-end">
                         <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@($"{String.Format(new System.Globalization.CultureInfo("en-US"), "{0:C}", order.Freight)}") />
                     </div>*@
-                    <a style="text-underline-position:below; cursor:pointer; color:red" @onclick="@(e => deleteOrder(@order.AppointmentId))">Отменить</a>
+                    <a style="text-underline-position:below; cursor:pointer; color:red" @onclick="@(e => deleteOrder(@order.Item1.AppointmentId))">Отменить</a>
                 </div>
             </RadzenCard>
         </Template>
@@ -39,8 +44,10 @@
     int pageSize = 9;
     int currentNum;
     int count;
-    IEnumerable<AppointmentCurrent> appointments;
+    IEnumerable<(AppointmentCurrent, RecordCurrent)> acrcList;
+    List<(AppointmentCurrent, RecordCurrent)> _acrcList;
     List<AppointmentCurrent> _appointments;
+    List<RecordCurrent> _records;
 
     protected override async Task OnInitializedAsync()
     {
@@ -48,20 +55,36 @@
         var userJson = await localStorage.GetItemAsync<string>("user");
         var userFromJson = JsonConvert.DeserializeObject<UserTable>(userJson);
         _appointments = (await acs.UserAsync(userFromJson.UserUirId)).ToList();
-        count = _appointments.Count();
+        _records = (await rcs.UserAsync(userFromJson.UserUirId)).ToList();
+        _acrcList = assignLists(_appointments, _records);
+        count = _acrcList.Count();
         currentNum = count;
         if (currentNum > pageSize)
             currentNum = pageSize;
-        appointments = _appointments.GetRange(0, currentNum);
+        acrcList = _acrcList.GetRange(0, currentNum);
     }
 
     void PageChanged(PagerEventArgs args)
     {
-        appointments = _appointments.GetRange(args.Skip, args.Top);
+        acrcList = _acrcList.GetRange(args.Skip, args.Top);
     }
 
     void deleteOrder(int id)
     {
         //Заглушка
+    }
+
+    List<(AppointmentCurrent, RecordCurrent)> assignLists(List<AppointmentCurrent> acList, List<RecordCurrent> rcList)
+    {
+        var acrcList = new List<(AppointmentCurrent, RecordCurrent)>();
+        foreach (var ac in acList)
+        {
+            foreach (var rc in rcList)
+            {
+                if (ac.From1 == rc.From1 && ac.To1 == rc.To1)
+                    acrcList.Add((ac, rc));
+            }
+        }
+        return acrcList;
     }
 }
