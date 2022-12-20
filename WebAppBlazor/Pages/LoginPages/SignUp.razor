@@ -1,16 +1,18 @@
 ﻿@layout CentredCardLayout
 @page "/SignUp"
-@using System.Text;
-@using System.Security.Cryptography;
+@using System.Net.Http.Headers;
 @using WebAppBlazor.Data;
 @using WebAppBlazor.Data.Models;
+@using WebAppBlazor.Services;
 @using Newtonsoft.Json;
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
-@inject HttpClient http
+@inject IPassesService passesService
 
 			<EditForm Model="@user" OnValidSubmit="@ValidateUser">
+				<DataAnnotationsValidator/>
+				<ValidationSummary />
 				<div>
 					<br /><br />
 				</div>
@@ -83,37 +85,21 @@
 	{
 		if (pass != user.Pass.PasswordHash)
 		{ 
-			LoginMessadge = "Неправильный логин или пароль!";
+			LoginMessadge = "Пароли не совпадают!";
 			IsVisible = true;
 			return await Task.FromResult(false);
 		}
 		try
 		{
-			byte[] bytes = Encoding.UTF8.GetBytes(user.Pass.PasswordHash);
-			SHA256Managed hashstring = new SHA256Managed();
-			byte[] hash = hashstring.ComputeHash(bytes);
-			string hashString = string.Empty;
-			foreach (byte x in hash)
-			{
-				hashString += String.Format("{0:x2}", x);
-			}
-			UserTable user2 = new UserTable();
-			user2.Pass = new Pass();
-			user2.Pass.PasswordHash = hashString;
-
-			var mess = await http.PostAsJsonAsync<UserTable>("https://localhost:7057/api/Passes/Login", user2);
-			var responseStatusCode = mess.StatusCode;
-			if (responseStatusCode == System.Net.HttpStatusCode.OK)
+			UserTable user2 = new UserTable(user);
+			if (await passesService.SignUpAsync(user))
 			{
 				NavigationManager.NavigateTo("/Login");
 				return await Task.FromResult(true);
 			}
-			else
-			{
-				LoginMessadge = "Данный логин уже занят. Попробуйте другой!";
-				IsVisible = true;
-				return await Task.FromResult(false);
-			}
+			LoginMessadge = "Данный логин уже занят. Попробуйте другой!";
+			IsVisible = true;
+			return await Task.FromResult(false);
 		}
 		catch (Exception ex)
 		{

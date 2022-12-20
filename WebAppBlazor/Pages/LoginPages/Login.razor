@@ -1,17 +1,21 @@
 ﻿@layout CentredCardLayout
 @page "/Login"
 @using System.Text;
+@using System.Net.Http.Headers;
 @using WebAppBlazor.Data;
 @using WebAppBlazor.Data.Models;
+@using WebAppBlazor.Services;
 @using Newtonsoft.Json;
 @using System.Security.Cryptography;
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
-@inject HttpClient http
+@inject IPassesService passesService
  
 
 			<EditForm Model="@user" OnValidSubmit="@ValidateUser">
+				<DataAnnotationsValidator/>
+				<ValidationSummary />
 				<div>
 					<br /><br />
 				</div>
@@ -56,35 +60,20 @@
 
 	private async Task<bool> ValidateUser()
 	{
-		//Сделаю это в веб-приложении, сейчас заглушка тут
-		byte[] bytes = Encoding.UTF8.GetBytes(user.PasswordHash);
-		SHA256Managed hashstring = new SHA256Managed();
-		byte[] hash = hashstring.ComputeHash(bytes);
-		string hashString = string.Empty;
-		foreach (byte x in hash)
-		{
-			hashString += String.Format("{0:x2}", x);
-		}
-		PassToken user2 = new PassToken(user);
-		user2.PasswordHash = hashString;
-
+		PassToken pass2 = new PassToken(user);
 		try
 		{
-			var mess = await http.PostAsJsonAsync<PassToken>("https://localhost:7057/api/Passes/Login", user2);
+			//http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "Your Oauth token");
+			var returnedPass = await passesService.LoginAsync(pass2);
 
-			var responseStatusCode = mess.StatusCode;
-
-			if (responseStatusCode == System.Net.HttpStatusCode.OK)
+			if (returnedPass.Token != null)
 			{
-				var responseBody = await mess.Content.ReadAsStringAsync();
-				var returned_user = JsonConvert.DeserializeObject<PassToken>(responseBody);
-
-				((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(returned_user.UserUir.FirstName);
+				((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(returnedPass.UserUir.FirstName);
 
 				NavigationManager.NavigateTo("/");
 
-				await localStorage.SetItemAsync("name", returned_user.UserUir.FirstName);
-				await localStorage.SetItemAsync("token", returned_user.Token);
+				await localStorage.SetItemAsync("name", returnedPass.UserUir.FirstName);
+				await localStorage.SetItemAsync("token", returnedPass.Token);
 				return await Task.FromResult(true);
 			}
 			else

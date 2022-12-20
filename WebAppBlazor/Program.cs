@@ -2,7 +2,10 @@ using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
+using Radzen;
 using WebAppBlazor.Data;
+using WebAppBlazor.Services;
+using static System.Net.WebRequestMethods;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,8 +19,16 @@ builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 
+builder.Services.AddHttpClient<IPassesService, PassesService>( x =>
+{
+    x.BaseAddress = new Uri("https://localhost:7057/api/");
+    x.DefaultRequestHeaders.Add("User-Agent", "BlazorServer");
+});
 builder.Services.AddSingleton<HttpClient>();
-
+builder.Services.AddScoped<DialogService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<TooltipService>();
+builder.Services.AddScoped<ContextMenuService>();
 
 var app = builder.Build();
 
