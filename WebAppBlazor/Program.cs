@@ -24,6 +24,12 @@ builder.Services.AddHttpClient<IPassesService, PassesService>( x =>
     x.BaseAddress = new Uri("https://localhost:7057/api/");
     x.DefaultRequestHeaders.Add("User-Agent", "BlazorServer");
 });
+
+builder.Services.AddHttpClient<IAppointmentCurrentService, AppointmentCurrentService>( x =>
+{
+    x.BaseAddress = new Uri("https://localhost:7057/api/AppointmentCurrents/");
+    x.DefaultRequestHeaders.Add("User-Agent", "BlazorServer");
+});
 builder.Services.AddSingleton<HttpClient>();
 builder.Services.AddScoped<DialogService>();
 builder.Services.AddScoped<NotificationService>();

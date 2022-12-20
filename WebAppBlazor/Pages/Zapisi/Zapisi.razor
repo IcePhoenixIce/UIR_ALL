@@ -1,50 +1,67 @@
-﻿
+﻿@layout CentredCardLayout
+@page "/User/Appointmets"
+@using WebAppBlazor.Data;
+@using WebAppBlazor.Data.Models;
+@using WebAppBlazor.Services;
+@using Newtonsoft.Json;
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject IAppointmentCurrentService acs
 
-<RadzenDataList WrapItems="true" AllowPaging="false" Data="@orders" TItem="Order">
-    <Template Context="order">
-        <RadzenCard Style="width:300px;">
-            <div class="d-flex flex-row align-items-center">
-                <RadzenImage Path="@order.Employee?.Photo" Class="rounded-circle float-start me-3" Style="width: 80px; height: 80px;" />
-                <div>
-                    <h4 class="mb-0">@(order.Employee?.FirstName + " " + order.Employee?.LastName)</h4>
-                    <div>@order.Customer?.CompanyName</div>
-                    <div style="font-size: .8em">@(order.ShipCity), @(order.ShipCountry)</div>
+
+<RadzenDataList WrapItems="true" AllowPaging="false" Data="@appointments" TItem="AppointmentCurrent">
+        <Template Context="order">
+            <RadzenCard Style="width:300px;">
+                <div class="d-flex flex-row align-items-center">
+                    <div>
+                        <h4 class="mb-0">@(@order.Specialist.SpecialistNavigation.FirstName + " "  + @order.Specialist.SpecialistNavigation.LastName)</h4>
+                        <div>@order.Specialist.Specialization</div>
+@*                      <div style="font-size: .8em">@(order.), @(order.ShipCountry)</div>*@
                 </div>
-            </div>
-            <hr style="border: none; background-color: rgba(0,0,0,.08); height: 1px; margin: 1rem 0;" />
-            <div class="row">
-                <div class="col-md-8 text-truncate">
-                    <b>@(order.ShipName)</b>
                 </div>
-                <div class="col-md-4 text-end">
-                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@($"{String.Format(new System.Globalization.CultureInfo("en-US"), "{0:C}", order.Freight)}") />
+                <hr style="border: none; background-color: rgba(0,0,0,.08); height: 1px; margin: 1rem 0;" />
+                <div class="row">
+@*                    <div class="col-md-8 text-truncate">
+                        <b>@(order.ShipName)</b>
+                    </div>*@
+@*                    <div class="col-md-4 text-end">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@($"{String.Format(new System.Globalization.CultureInfo("en-US"), "{0:C}", order.Freight)}") />
+                    </div>*@
+                    <a style="text-underline-position:below; cursor:pointer; color:red" @onclick="@(e => deleteOrder(@order.AppointmentId))">Отменить</a>
                 </div>
-            </div>
-        </RadzenCard>
-    </Template>
+            </RadzenCard>
+        </Template>
 </RadzenDataList>
 <RadzenPager ShowPagingSummary="true" PagingSummaryFormat="@pagingSummaryFormat" HorizontalAlign="HorizontalAlign.Right" Count="count" PageSize="@pageSize" PageNumbersCount="5" PageChanged="@PageChanged" />
 @code {
     string pagingSummaryFormat = "Displaying page {0} of {1} (total {2} records)";
-    int pageSize = 6;
+    int pageSize = 9;
+    int currentNum;
     int count;
-    IEnumerable<Order> orders;
+    IEnumerable<AppointmentCurrent> appointments;
+    List<AppointmentCurrent> _appointments;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-
-        count = dbContext.Orders.Count();
-        orders = GetOrders(0, pageSize);
+        var userJson = await localStorage.GetItemAsync<string>("user");
+        var userFromJson = JsonConvert.DeserializeObject<UserTable>(userJson);
+        _appointments = (await acs.UserAsync(userFromJson.UserUirId)).ToList();
+        count = _appointments.Count();
+        currentNum = count;
+        if (currentNum > pageSize)
+            currentNum = pageSize;
+        appointments = _appointments.GetRange(0, currentNum);
     }
 
     void PageChanged(PagerEventArgs args)
     {
-        orders = GetOrders(args.Skip, args.Top);
+        appointments = _appointments.GetRange(args.Skip, args.Top);
     }
 
-    IEnumerable<Order> GetOrders(int skip, int take)
+    void deleteOrder(int id)
     {
-        return dbContext.Orders.Include("Customer").Include("Employee").Skip(skip).Take(take).ToList();
+        //Заглушка
     }
 }

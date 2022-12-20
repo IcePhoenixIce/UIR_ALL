@@ -47,7 +47,11 @@ namespace UIR_WebAPI_1.Controllers
 		  {
 			  return NotFound();
 		  }
-			var appointmentCurrents = await _context.AppointmentCurrents.Where(ac => ac.UserUirId == id).ToListAsync();
+			var appointmentCurrents = await _context.AppointmentCurrents
+				.Include(ac=>ac.Specialist)
+					.ThenInclude(ac=>ac.SpecialistNavigation)
+				.Where(ac => ac.UserUirId == id)
+				.ToListAsync();
 
 			if (appointmentCurrents == null)
 			{

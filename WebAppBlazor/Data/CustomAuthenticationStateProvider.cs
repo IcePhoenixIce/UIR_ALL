@@ -1,5 +1,6 @@
 ﻿using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
+using Newtonsoft.Json;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Xml.Linq;
@@ -17,14 +18,15 @@ namespace WebAppBlazor.Data
 
 		public override async Task<AuthenticationState> GetAuthenticationStateAsync()
 		{
-			var name = await _localStorageService.GetItemAsync<string>("name");
+			var userJson = await _localStorageService.GetItemAsync<string>("user");
+			var userFromStr = JsonConvert.DeserializeObject<UserTable>(userJson);
 			ClaimsIdentity identity;
-			if (name != null)
+			if (userFromStr != null)
 			{
 				identity = new ClaimsIdentity(
 					new[]
 					{
-					new Claim(ClaimTypes.Name, name),
+					new Claim(ClaimTypes.Name, userFromStr.FirstName),
 					}, "apiauth_type");
 			}
 			else
@@ -50,7 +52,7 @@ namespace WebAppBlazor.Data
 
 		public void MarkUserAsLoggedOut()
 		{
-			_localStorageService.RemoveItemAsync("name");
+			_localStorageService.RemoveItemAsync("user");
 			_localStorageService.RemoveItemAsync("token");
 
 			var identity = new ClaimsIdentity();

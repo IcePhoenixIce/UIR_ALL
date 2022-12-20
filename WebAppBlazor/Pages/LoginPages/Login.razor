@@ -1,12 +1,9 @@
 ﻿@layout CentredCardLayout
 @page "/Login"
-@using System.Text;
-@using System.Net.Http.Headers;
 @using WebAppBlazor.Data;
 @using WebAppBlazor.Data.Models;
 @using WebAppBlazor.Services;
 @using Newtonsoft.Json;
-@using System.Security.Cryptography;
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
@@ -63,7 +60,6 @@
 		PassToken pass2 = new PassToken(user);
 		try
 		{
-			//http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "Your Oauth token");
 			var returnedPass = await passesService.LoginAsync(pass2);
 
 			if (returnedPass.Token != null)
@@ -72,7 +68,7 @@
 
 				NavigationManager.NavigateTo("/");
 
-				await localStorage.SetItemAsync("name", returnedPass.UserUir.FirstName);
+				await localStorage.SetItemAsync("user", JsonConvert.SerializeObject(returnedPass.UserUir));
 				await localStorage.SetItemAsync("token", returnedPass.Token);
 				return await Task.FromResult(true);
 			}
