@@ -11,8 +11,6 @@
  
 
 			<EditForm Model="@user" OnValidSubmit="@ValidateUser">
-				<DataAnnotationsValidator/>
-				<ValidationSummary />
 				<div>
 					<br /><br />
 				</div>
@@ -38,6 +36,8 @@
 				</div>
 				<br />
 				<ValidationMess IsVisible="IsVisible" result="1" renderFragment="@LoginMessadge"/>
+				<DataAnnotationsValidator />
+				<ValidationSummary />
 			</EditForm>
 
 @code {

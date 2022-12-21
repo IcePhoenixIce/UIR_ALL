@@ -18,21 +18,22 @@ namespace WebAppBlazor.Data
 
 		public override async Task<AuthenticationState> GetAuthenticationStateAsync()
 		{
-			var userJson = await _localStorageService.GetItemAsync<string>("user");
-			var userFromStr = JsonConvert.DeserializeObject<UserTable>(userJson);
-			ClaimsIdentity identity;
-			if (userFromStr != null)
-			{
-				identity = new ClaimsIdentity(
-					new[]
-					{
-					new Claim(ClaimTypes.Name, userFromStr.FirstName),
-					}, "apiauth_type");
-			}
-			else
-			{
-				identity = new ClaimsIdentity();
-			}
+            ClaimsIdentity identity;
+            var userJson = await _localStorageService.GetItemAsync<string>("user");
+			if (userJson != null) 
+			{ 
+				var userFromStr = JsonConvert.DeserializeObject<UserTable>(userJson);
+				
+				if (userFromStr != null)
+				{
+					identity = new ClaimsIdentity(
+						new[]
+						{
+						new Claim(ClaimTypes.Name, userFromStr.FirstName),
+						}, "apiauth_type");
+				}
+            }
+			identity = new ClaimsIdentity();
 			var user = new ClaimsPrincipal(identity);
 
 			return await Task.FromResult(new AuthenticationState(user));
