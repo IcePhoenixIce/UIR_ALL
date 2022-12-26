@@ -29,8 +29,6 @@ public partial class UirDbContext : DbContext
 
     public virtual DbSet<UserTable> UserTables { get; set; }
 
-    public virtual DbSet<WeekDay> WeekDays { get; set; }
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Name=UIR_DB");
@@ -139,10 +137,6 @@ public partial class UirDbContext : DbContext
             entity.HasOne(d => d.Specialist).WithMany(p => p.SheduleTables)
                 .HasForeignKey(d => d.SpecialistId)
                 .HasConstraintName("R_3");
-
-            entity.HasOne(d => d.Weekday).WithMany(p => p.SheduleTables)
-                .HasForeignKey(d => d.WeekdayId)
-                .HasConstraintName("R_4");
         });
 
         modelBuilder.Entity<Specialist>(entity =>
@@ -201,19 +195,6 @@ public partial class UirDbContext : DbContext
                 .HasMaxLength(200)
                 .IsUnicode(false)
                 .HasColumnName("Phone_Number");
-        });
-
-        modelBuilder.Entity<WeekDay>(entity =>
-        {
-            entity.HasKey(e => e.WeekdayId).HasName("PK__Week_Day__D07E077FB824584A");
-
-            entity.ToTable("Week_Day");
-
-            entity.Property(e => e.WeekdayId).HasColumnName("Weekday_ID");
-            entity.Property(e => e.WeekDay1)
-                .HasMaxLength(200)
-                .IsUnicode(false)
-                .HasColumnName("Week_Day");
         });
 
         OnModelCreatingPartial(modelBuilder);

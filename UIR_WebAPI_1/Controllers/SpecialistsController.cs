@@ -33,7 +33,7 @@ namespace UIR_WebAPI_1.Controllers
             return await _context.Specialists.Include(user => user.SpecialistNavigation).ToListAsync();
         }
 
-        // GET: api/Specialists/5
+        // GET: api/Specialists/4
         [HttpGet("{id}")]
         public async Task<ActionResult<Specialist>> GetSpecialist(int id)
         {

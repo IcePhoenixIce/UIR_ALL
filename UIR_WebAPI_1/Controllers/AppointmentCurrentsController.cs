@@ -81,7 +81,7 @@ namespace UIR_WebAPI_1.Controllers
 
 		// POST: api/AppointmentCurrents
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-		[HttpPost]
+		[HttpPost("User")]
 		public async Task<ActionResult<AppointmentCurrent>> PostAppointmentCurrent(AppointmentCurrent appointmentCurrent)
 		{
 		  if (_context.AppointmentCurrents == null)
@@ -104,7 +104,7 @@ namespace UIR_WebAPI_1.Controllers
                 return BadRequest(1);
             foreach (var i in SpecView[0].SheduleTables)
             {
-                if (i.WeekdayId == (int)appointmentCurrent.From1.DayOfWeek)
+                if (i.WeekdayId == appointmentCurrent.From1.DayOfWeek)
                     if (!((i.From1 <= appointmentCurrent.From1.TimeOfDay &&
                         i.LunchStart >= appointmentCurrent.To1.TimeOfDay) ||
                         (i.LunchEnd <= appointmentCurrent.From1.TimeOfDay &&

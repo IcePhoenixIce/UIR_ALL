@@ -22,7 +22,7 @@ namespace UIR_WebAPI_1.Controllers
             _context = context;
         }
 
-        // GET: api/SheduleTables
+        // GET: api/SheduleTables/id
         [HttpGet("{id}")]
         public async Task<ActionResult<IEnumerable<SheduleTable>>> GetSheduleTables(int id)
         {
