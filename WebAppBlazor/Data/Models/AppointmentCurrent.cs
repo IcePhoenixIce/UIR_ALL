@@ -7,6 +7,8 @@ namespace WebAppBlazor.Data.Models
 	{
 		public int AppointmentId { get; set; }
 
+		public string AppointmentName { get { return AppointmentId.ToString(); } }
+
 		public int SpecialistId { get; set; }
 
 		public int UserUirId { get; set; }

@@ -32,8 +32,11 @@ namespace WebAppBlazor.Data
 						new Claim(ClaimTypes.Name, userFromStr.FirstName),
 						}, "apiauth_type");
 				}
-            }
-			identity = new ClaimsIdentity();
+				else
+					identity = new ClaimsIdentity();
+			}
+			else
+				identity = new ClaimsIdentity();
 			var user = new ClaimsPrincipal(identity);
 
 			return await Task.FromResult(new AuthenticationState(user));
@@ -54,7 +57,8 @@ namespace WebAppBlazor.Data
 		public void MarkUserAsLoggedOut()
 		{
 			_localStorageService.RemoveItemAsync("user");
-			_localStorageService.RemoveItemAsync("token");
+			_localStorageService.RemoveItemAsync("tokenA");
+			_localStorageService.RemoveItemAsync("tokenB");
 
 			var identity = new ClaimsIdentity();
 			var user = new ClaimsPrincipal(identity);

@@ -5,11 +5,11 @@ using System.Security.Cryptography;
 
 namespace WebAppBlazor.Services
 {
-    public class PassesService:IPassesService
+    public class PassesServiceA:IPassesServiceA
     {
         public HttpClient _httpClient { get; }
 
-        public PassesService(HttpClient httpClient) 
+        public PassesServiceA(HttpClient httpClient) 
         { 
             _httpClient = httpClient;
         }

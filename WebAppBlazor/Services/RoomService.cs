@@ -3,23 +3,23 @@ using System.Text;
 using WebAppBlazor.Data.Models;
 using System.Security.Cryptography;
 using Blazored.LocalStorage;
-using Radzen.Blazor.Rendering;
 
 namespace WebAppBlazor.Services
 {
-    public class RecordsCurrentService : IRecordsCurrentService
-    {
-        public HttpClient _httpClient { get; }
-        private ILocalStorageService _localStorageService { get; }
-        public RecordsCurrentService(HttpClient httpClient, ILocalStorageService localStorageService) 
+    public class RoomService : IRoomService
+	{
+        private HttpClient _httpClient { get; }
+		private ILocalStorageService _localStorageService { get; }
+
+        public RoomService(HttpClient httpClient, ILocalStorageService localStorageService) 
         { 
             _httpClient = httpClient;
-            _localStorageService = localStorageService;
+			_localStorageService = localStorageService;
         }
 
-        public async Task<IEnumerable<RecordCurrent>> UserAsync(int id)
+        public async Task<IEnumerable<Room>?> RoomsAsync(int areaId)
         {
-            var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"User/{id}");
+            var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"{areaId}");
             var token = await _localStorageService.GetItemAsync<string>("tokenB");
             requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -28,29 +28,27 @@ namespace WebAppBlazor.Services
             if (responseStatusCode == System.Net.HttpStatusCode.OK)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
-                var returned_user = JsonConvert.DeserializeObject<List<RecordCurrent>?>(responseBody);
+                var returned_user = JsonConvert.DeserializeObject<List<Room>?>(responseBody);
                 return await Task.FromResult(returned_user);
             }
-            throw new Exception("ServerError!");
+            throw new NotImplementedException();
         }
 
-        public async Task<RecordCurrent?> PostRecordAsync(RecordCurrent record)
+        public async Task<Room?> RoomAsync(int id)
         {
-            string serializeAppointment = JsonConvert.SerializeObject(record);
-            var requstMassage = new HttpRequestMessage(HttpMethod.Post, "User");
+            var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"Room/{id}");
             var token = await _localStorageService.GetItemAsync<string>("tokenB");
             requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            requstMassage.Content = new StringContent(serializeAppointment);
-            requstMassage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json-patch+json");
+
             var response = await _httpClient.SendAsync(requstMassage);
             var responseStatusCode = response.StatusCode;
-            if (responseStatusCode == System.Net.HttpStatusCode.Created)
+            if (responseStatusCode == System.Net.HttpStatusCode.OK)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
-                var returned_user = JsonConvert.DeserializeObject<RecordCurrent>(responseBody);
+                var returned_user = JsonConvert.DeserializeObject<Room?>(responseBody);
                 return await Task.FromResult(returned_user);
             }
-            return null;
+            throw new NotImplementedException();
         }
     }
 }

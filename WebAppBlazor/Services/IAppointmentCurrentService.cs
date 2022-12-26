@@ -6,5 +6,6 @@ namespace WebAppBlazor.Services
 	{
         public Task<IEnumerable<AppointmentCurrent>?> UserAsync(int id);
         public Task<IEnumerable<AppointmentCurrent>?> SpecialistAsync(int id);
+        public Task<AppointmentCurrent?> PostAppointmentAsync(AppointmentCurrent appointment);
     }
 }

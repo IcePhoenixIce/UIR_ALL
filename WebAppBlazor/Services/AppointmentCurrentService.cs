@@ -20,7 +20,7 @@ namespace WebAppBlazor.Services
 		public async Task<IEnumerable<AppointmentCurrent>?> UserAsync(int id) 
 		{
 			var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"User/{id}");
-			var token = await _localStorageService.GetItemAsync<string>("token");
+			var token = await _localStorageService.GetItemAsync<string>("tokenA");
 			requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
 			var response = await _httpClient.SendAsync(requstMassage);
@@ -37,7 +37,7 @@ namespace WebAppBlazor.Services
 		public async Task<IEnumerable<AppointmentCurrent>?> SpecialistAsync(int id)
 		{
 			var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"Specialist/{id}");
-			var token = await _localStorageService.GetItemAsync<string>("token");
+			var token = await _localStorageService.GetItemAsync<string>("tokenA");
 			requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
 			var response = await _httpClient.SendAsync(requstMassage);
@@ -50,5 +50,24 @@ namespace WebAppBlazor.Services
 			}
 			throw new Exception("ServerError!");
 		}
-	}
+
+        public async Task<AppointmentCurrent?> PostAppointmentAsync(AppointmentCurrent appointment)
+        {
+            string serializeAppointment = JsonConvert.SerializeObject(appointment);
+            var requstMassage = new HttpRequestMessage(HttpMethod.Post, "User");
+            var token = await _localStorageService.GetItemAsync<string>("tokenA");
+            requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            requstMassage.Content = new StringContent(serializeAppointment);
+            requstMassage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json-patch+json");
+            var response = await _httpClient.SendAsync(requstMassage);
+            var responseStatusCode = response.StatusCode;
+            if (responseStatusCode == System.Net.HttpStatusCode.Created)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var returned_user = JsonConvert.DeserializeObject<AppointmentCurrent>(responseBody);
+                return await Task.FromResult(returned_user);
+            }
+            return null;
+        }
+    }
 }

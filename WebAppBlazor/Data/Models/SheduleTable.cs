@@ -7,7 +7,7 @@ namespace WebAppBlazor.Data.Models
 	{
 		public int SpecialistId { get; set; }
 
-		public int WeekdayId { get; set; }
+		public DayOfWeek WeekdayId { get; set; }
 
 		public TimeSpan From1 { get; set; }
 

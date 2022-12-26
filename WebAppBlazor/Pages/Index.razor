@@ -2,20 +2,18 @@
 
 <PageTitle>Index</PageTitle>
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+<h1>Привет, мир!</h1>
 
 <AuthorizeView>
 	<Authorized>
-		Welcome, @context.User.Identity.Name
+		Здравствуйте, @context.User.Identity.Name
 	</Authorized>
 	<NotAuthorized>
-		You are signed out!!!
+		Вы не авторизованы!!!
 	</NotAuthorized>
 </AuthorizeView>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+@*<SurveyPrompt Title="How is Blazor working for you?" />*@
 
 <div>
 

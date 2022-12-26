@@ -7,7 +7,8 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
-@inject IPassesService passesService
+@inject IPassesServiceA passesServiceA
+@inject IPassesServiceB passesServiceB
  
 
 			<EditForm Model="@user" OnValidSubmit="@ValidateUser">
@@ -30,9 +31,9 @@
 				<br />
 				<div class="col-12 row" style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
 					<span class="col-8"></span>
-					<input type="submit" class="form-control col-6 btn btn-primary" value="Login" style="width:300px"/>
+					<input type="submit" class="form-control col-6 btn btn-primary" value="Войти" style="width:300px"/>
 					<div class="col-12 row" ></div>
-					<a href="/SignUp" style="width:fit-content">Sign Up</a>
+					<a href="/SignUp" style="width:fit-content">Зарегистироваться</a>
 				</div>
 				<br />
 				<ValidationMess IsVisible="IsVisible" result="1" renderFragment="@LoginMessadge"/>
@@ -60,16 +61,18 @@
 		PassToken pass2 = new PassToken(user);
 		try
 		{
-			var returnedPass = await passesService.LoginAsync(pass2);
+			var returnedPassA = await passesServiceA.LoginAsync(pass2);
+			var returnedPassB = await passesServiceB.LoginAsync(pass2);
 
-			if (returnedPass.Token != null)
+			if (returnedPassA.Token != null && returnedPassB.Token != null)
 			{
-				((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(returnedPass.UserUir.FirstName);
+				((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(returnedPassA.UserUir.FirstName);
 
 				NavigationManager.NavigateTo("/");
 
-				await localStorage.SetItemAsync("user", JsonConvert.SerializeObject(returnedPass.UserUir));
-				await localStorage.SetItemAsync("token", returnedPass.Token);
+				await localStorage.SetItemAsync("user", JsonConvert.SerializeObject(returnedPassA.UserUir));
+				await localStorage.SetItemAsync("tokenA", returnedPassA.Token);
+				await localStorage.SetItemAsync("tokenB", returnedPassB.Token);
 				return await Task.FromResult(true);
 			}
 			else

@@ -23,4 +23,25 @@ namespace WebAppBlazor.Data.Models
 
 		public virtual UserTable? SpecialistNavigation { get; set; }
 	}
+
+    public partial class SpecialistName : Specialist
+	{
+		public string LastName { get; set; } = null!;
+		public string FirstName { get; set; } = null!;
+
+		public SpecialistName(Specialist s) 
+		{
+			this.SpecialistId = s.SpecialistId;
+			this.Specialization = s.Specialization;
+			this.Degree = s.Degree;
+			this.Experience = s.Experience;
+			this.AdditionalInfo = s.AdditionalInfo;
+			if(s.SpecialistNavigation!= null)
+			{
+				this.LastName = s.SpecialistNavigation.LastName;
+				this.FirstName = s.SpecialistNavigation.FirstName;
+			}
+			
+		}
+    }
 }

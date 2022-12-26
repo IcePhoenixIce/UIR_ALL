@@ -1,0 +1,139 @@
+﻿@page "/Zapisi/Add"
+@using System.Linq.Dynamic.Core;
+@using WebAppBlazor.Data.Models;
+@using WebAppBlazor.Services;
+@using Newtonsoft.Json;
+@inject ISpecialistService ss
+@inject IAreaService areas
+@inject IRoomService rs
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject DialogService DialogService
+
+@*<RadzenExample Name="Scheduler" AdditionalSourceCodePages=@(new List<string>() { "EditAppointmentPage.razor" })/>*@
+
+<div>
+    <div class="col-12 row">
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Выберите специалиста: </RadzenText>
+            <RadzenDropDownDataGrid TValue="string" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" AllowClear="true"
+                                    Data=@(specList) Style="width: 100%" AllowColumnResize="true"
+                                    TextProperty="LastName" ValueProperty="SpecialistId" AllowFilteringByAllStringColumns="true"
+                                    Change=@(args => OnChangeSpec(args, "DropDownDataGrid with filtering by all string columns"))>
+                <Columns>
+                    <RadzenDropDownDataGridColumn Property="LastName" Title="Фамилия" Width="50px" />
+                    <RadzenDropDownDataGridColumn Property="FirstName" Title="Имя" Width="50px" />
+                    <RadzenDropDownDataGridColumn Property="Specialization" Title="Специальность" Width="100px" />
+                    <RadzenDropDownDataGridColumn Property="Degree" Title="Должность" Width="50px" />
+                </Columns>
+            </RadzenDropDownDataGrid>
+        </RadzenCard>
+    </div>
+    <div class="col-12 row">
+        <RadzenCard Visible=@(IsVisibleArea)>
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Выберите здание</RadzenText>
+            <RadzenDropDownDataGrid TValue="string" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" AllowClear="true"
+                                    Data=@(areaList) Style="width: 100%" AllowColumnResize="true"
+                                    TextProperty="AreaName" ValueProperty="AreaId" AllowFilteringByAllStringColumns="true"
+                                    Change=@(args => OnChangeArea(args, "DropDownDataGrid with filtering by all string columns"))>
+                <Columns>
+                    <RadzenDropDownDataGridColumn Property="AreaName" Title="Название" Width="50px" />
+                    <RadzenDropDownDataGridColumn Property="AreaLocation" Title="Адрес" Width="50px" />
+                </Columns>
+            </RadzenDropDownDataGrid>
+        </RadzenCard>
+    </div>
+    <div class="col-12 row">
+        <RadzenCard Visible=@(IsVisibleRoom)>
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Выберите комнату</RadzenText>
+            <RadzenDropDownDataGrid TValue="string" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" AllowClear="true"
+                                    Data=@(roomList) Style="width: 100%" AllowColumnResize="true"
+                                    TextProperty="RoomNumber" ValueProperty="RoomId" AllowFilteringByAllStringColumns="true"
+                                    Change=@(args => OnChangeRoom(args, "DropDownDataGrid with filtering by all string columns"))>
+                <Columns>
+                    <RadzenDropDownDataGridColumn Property="RoomNumber" Title="Название" Width="50px" />
+                    <RadzenDropDownDataGridColumn Property="AdditionalInformation" Title="Адрес" Width="200px" />
+                </Columns>
+            </RadzenDropDownDataGrid>
+        </RadzenCard>
+    </div>
+    <div class="col-12 row" style="display:@IsVisibleRecords">
+            <RadzenScheduler @ref=@scheduler TItem="DataItem" Data=@data TItem="DataItem" StartProperty="Start" EndProperty="End" TextProperty="Text" 
+                AppointmentSelect=@OnAppointmentSelect>
+            <RadzenWeekView />
+        </RadzenScheduler>
+    </div>
+</div>
+
+@code {
+    IEnumerable<SpecialistName> specList;
+    IEnumerable<Area> areaList;
+    IEnumerable<Room> roomList;
+    Specialist specialist;
+    Room room;
+    int userId;
+    bool IsVisibleArea = false;
+    bool IsVisibleRoom = false;
+    string IsVisibleRecords = "none";
+
+    RadzenScheduler<DataItem> scheduler;
+
+
+
+    List<DataItem> data = new List<DataItem>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        var userJson = await localStorage.GetItemAsync<string>("user");
+        userId = JsonConvert.DeserializeObject<UserTable>(userJson).UserUirId;
+        specList = await ss.SpecialistsAsync();
+        areaList = await areas.AreasAsync();
+    }
+
+
+
+    async void OnChangeSpec(object value, string name)
+    {
+        var str = value is IEnumerable<object> ? string.Join(", ", (IEnumerable<object>)value) : value;
+        specialist = await ss.SpecialistAsync((int)value);
+        IsVisibleArea = true;
+        IsVisibleRoom = false;
+        IsVisibleRecords = "none";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    async void OnChangeArea(object value, string name)
+    {
+        var str = value is IEnumerable<object> ? string.Join(", ", (IEnumerable<object>)value) : value;
+        roomList = await rs.RoomsAsync((int)value);
+        IsVisibleRoom = true;
+        IsVisibleRecords = "none";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    async void OnChangeRoom(object value, string name)
+    {
+        var str = value is IEnumerable<object> ? string.Join(", ", (IEnumerable<object>)value) : value;
+        IsVisibleRecords = "flex";
+        room = await rs.RoomAsync((int)value);
+        data = DataItem.dataItems(specialist.SheduleTables);
+        data = DataItem.dataListXorAppointments(data, specialist.AppointmentCurrents);
+        data = DataItem.dataListXorRecords(data, room.RecordCurrents);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<DataItem> args)
+    {
+
+        await DialogService.OpenAsync<EditAppointmentPage>("Записаться", 
+        new Dictionary<string, object> 
+            { 
+                { "Appointment", args.Data }, 
+                { "SpecialistId", specialist.SpecialistId },
+                { "UserId",  userId},
+                { "RoomId", room.RoomId }
+                });
+
+        await scheduler.Reload();
+    }
+}

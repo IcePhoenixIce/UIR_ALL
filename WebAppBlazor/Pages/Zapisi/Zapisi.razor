@@ -10,6 +10,8 @@
 @inject IRecordsCurrentService rcs
 
 
+
+<button class="btn btn-primary" @onclick="CreateZapis">Записаться</button>
 <RadzenDataList WrapItems="true" AllowPaging="false" Data="@acrcList" TItem="(AppointmentCurrent, RecordCurrent)">
         <Template Context="order">
             <RadzenCard Style="width:300px;">
@@ -73,6 +75,12 @@
     {
         //Заглушка
     }
+
+    void CreateZapis()
+    {
+        NavigationManager.NavigateTo("/Zapisi/Add");
+    }
+
 
     List<(AppointmentCurrent, RecordCurrent)> assignLists(List<AppointmentCurrent> acList, List<RecordCurrent> rcList)
     {

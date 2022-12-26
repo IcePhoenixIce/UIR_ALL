@@ -2,9 +2,8 @@
 
 namespace WebAppBlazor.Services
 {
-    public interface IPassesService
+    public interface IPassesServiceB
     {
         public Task<PassToken> LoginAsync(PassToken pass);
-        public Task<bool> SignUpAsync(UserTable User);
     }
 }

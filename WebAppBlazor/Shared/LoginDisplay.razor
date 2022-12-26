@@ -3,12 +3,12 @@
 
 <AuthorizeView>
     <Authorized>
-        <a href="Identity/Account/Manage">Hello, @context.User.Identity?.Name!</a>
-        <a href="/" @onclick="(() => Logout())">Log out</a>
+        <a href="Identity/Account/Manage">Здравствуйте, @context.User.Identity?.Name!</a>
+        <a href="/" @onclick="(() => Logout())">Выйти</a>
     </Authorized>
     <NotAuthorized>
-        <a href="/SignUp">Register</a>
-        <a href="/Login">Log in</a>
+        <a href="/SignUp">Зарегистироваться</a>
+        <a href="/Login">Войти</a>
     </NotAuthorized>
 </AuthorizeView>
 

@@ -1,0 +1,125 @@
+﻿@using WebAppBlazor.Data.Models;
+@using WebAppBlazor.Services;
+@inject DialogService DialogService
+@inject IRecordsCurrentService rcs
+@inject IAppointmentCurrentService acs
+@inject NavigationManager NavigationManager
+
+<RadzenTemplateForm TItem="DataItem" Data="@model" Submit=@OnSubmit>
+<div class="row" style="margin-bottom: 16px">
+    <div class="col-md-3">
+        <RadzenLabel Text="Начало" />
+    </div>
+    <div class="col">
+        <RadzenDatePicker @bind-Value="@model.Start" Name="Start" ShowTime="true" />
+        <RadzenRequiredValidator Text="Start is required" Component="Start" />
+    </div>
+</div>
+<div class="row" style="margin-bottom: 16px">
+    <div class="col-md-3">
+        <RadzenLabel Text="Конец" />
+    </div>
+    <div class="col">
+        <RadzenDatePicker Name="End" @bind-Value="@model.End" ShowTime="true" />
+        <RadzenRequiredValidator Component="End" Text="End is required" />
+    </div>
+</div>
+<div class="row">
+    <ValidationMess IsVisible=@IsVisible result=1 renderFragment=@MessageString />
+    <br/>
+    <br/>
+</div>
+
+<div class="row">
+    <div class="col-md-3"></div>
+    <div class="col">
+        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" />
+    </div>
+</div>
+
+</RadzenTemplateForm>
+@code {
+    [Parameter]
+    public DataItem Appointment { get; set; }
+
+    [Parameter]
+    public int SpecialistId { get; set; }
+
+    [Parameter]
+    public int UserId { get; set; }
+
+    [Parameter]
+    public int RoomId { get; set; }
+
+    DataItem model;
+
+    bool IsVisible = false;
+
+    string MessageString = "Время записи не может выходить за первоначальные границы!";
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        model = new DataItem(Appointment.Start, Appointment.End);
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+    }
+
+    async Task<bool> OnSubmit(DataItem model)
+    {
+        //заглушка
+        if (model.Start < Appointment.Start || model.End > Appointment.End || model.End <= model.Start)
+        {
+            IsVisible = true;
+            model.Start = Appointment.Start; 
+            model.End = Appointment.End;
+            return await Task.FromResult(false);
+        } 
+        else
+        {
+            var record = new RecordCurrent 
+            { 
+                UserUirId = UserId,
+                RoomId = RoomId,
+                From1 = model.Start,
+                To1 = model.End,
+                InvitesCurrent = new List<InvitesCurrent> 
+                { 
+                    new InvitesCurrent
+                    { 
+                        UserUirId = SpecialistId
+                    } 
+                } 
+            };
+            var appointment = new AppointmentCurrent 
+            { 
+                UserUirId = UserId,
+                SpecialistId = SpecialistId,
+                From1 = model.Start,
+                To1 = model.End
+            };
+            record = await rcs.PostRecordAsync(record);
+            appointment = await acs.PostAppointmentAsync(appointment);
+
+            if (record == null || appointment == null)
+            {
+                MessageString = "Запись не выполнена, попробуйте записаться еще раз!";
+                IsVisible = true;
+                await InvokeAsync(StateHasChanged);
+                Thread.Sleep(5000);
+                DialogService.Close(model);
+                NavigationManager.NavigateTo("/Zapisi/Add");
+                //Заглушка удаления
+
+                return await Task.FromResult(false);
+            }
+            DialogService.Close(model);
+            NavigationManager.NavigateTo("/User/Appointmets");
+            return await Task.FromResult(true);
+        }
+        
+    }
+}
