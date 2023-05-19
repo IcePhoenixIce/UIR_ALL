@@ -10,7 +10,6 @@ using UIR_Service_B.Models;
 
 namespace UIR_Service_B.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AreasController : ControllerBase

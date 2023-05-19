@@ -22,6 +22,7 @@ public partial class UserTable
     public virtual ICollection<InvitesEnded> InvitesEndeds { get; } = new List<InvitesEnded>();
 
     public virtual Pass? Pass { get; set; }
+    public virtual PassGarmony? PassGarmony { get; set; }
 
     public virtual ICollection<RecordCurrent> RecordCurrents { get; } = new List<RecordCurrent>();
 

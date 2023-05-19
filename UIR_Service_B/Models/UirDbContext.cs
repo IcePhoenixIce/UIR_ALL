@@ -22,6 +22,7 @@ public partial class UirDbContext : DbContext
     public virtual DbSet<InvitesEnded> InvitesEndeds { get; set; }
 
     public virtual DbSet<Pass> Passes { get; set; }
+    public virtual DbSet<PassGarmony> PassesGarmony { get; set; }
 
     public virtual DbSet<RatingScale> RatingScales { get; set; }
 
@@ -75,7 +76,7 @@ public partial class UirDbContext : DbContext
                 .HasColumnName("Additional_Info");
             entity.Property(e => e.UserUirId).HasColumnName("UserUIR_ID");
 
-            entity.HasOne(d => d.Record).WithMany(p => p.InvitesCurrent)
+            entity.HasOne(d => d.Record).WithMany(p => p.InvitesCurrents)
                 .HasForeignKey(d => d.RecordId)
                 .HasConstraintName("R_25");
 
@@ -99,7 +100,7 @@ public partial class UirDbContext : DbContext
                 .HasColumnName("Additional_Info");
             entity.Property(e => e.UserUirId).HasColumnName("UserUIR_ID");
 
-            entity.HasOne(d => d.Record).WithMany(p => p.InvitesEnded)
+            entity.HasOne(d => d.Record).WithMany(p => p.InvitesEndeds)
                 .HasForeignKey(d => d.RecordId)
                 .HasConstraintName("R_36");
 
@@ -131,6 +132,29 @@ public partial class UirDbContext : DbContext
                 .HasConstraintName("R_28");
         });
 
+        modelBuilder.Entity<PassGarmony>(entity =>
+        {
+            entity.HasKey(e => e.UserUirId).HasName("PK_Pass_Garmony");
+
+            entity.ToTable("Pass_Garmony");
+
+            entity.Property(e => e.UserUirId)
+                .ValueGeneratedNever()
+                .HasColumnName("Specialist_ID");
+            entity.Property(e => e.Password)
+                .HasMaxLength(2000)
+                .IsUnicode(false)
+                .HasColumnName("Password");
+            entity.Property(e => e.Login)
+                .HasMaxLength(2000)
+                .IsUnicode(false)
+                .HasColumnName("Login");
+
+            entity.HasOne(d => d.UserUir).WithOne(p => p.PassGarmony)
+                .HasForeignKey<PassGarmony>(d => d.UserUirId)
+                .HasConstraintName("FK_Pass_Garmony_Specialist");
+        });
+
         modelBuilder.Entity<RatingScale>(entity =>
         {
             entity.HasKey(e => e.RatingId).HasName("PK__Rating_S__BE48C82598A677E7");
@@ -146,7 +170,7 @@ public partial class UirDbContext : DbContext
 
             entity.ToTable("Record_Current");
 
-            entity.Property(e => e.RecordId).HasColumnName("Record_ID");
+            entity.Property(e => e.RecordId).ValueGeneratedNever().HasColumnName("Record_ID");
             entity.Property(e => e.RoomId).HasColumnName("Room_ID");
             entity.Property(e => e.UserUirId).HasColumnName("UserUIR_ID");
             entity.Property(e => e.From1).HasColumnType("datetime");

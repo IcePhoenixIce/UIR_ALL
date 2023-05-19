@@ -17,7 +17,7 @@ public partial class RecordEnded
 
     public int? RatingId { get; set; }
 
-    public virtual ICollection<InvitesEnded>? InvitesEnded { get; set; }
+    public virtual ICollection<InvitesEnded>? InvitesEndeds { get; set; }
 
     public virtual RatingScale? Rating { get; set; }
 

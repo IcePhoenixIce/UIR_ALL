@@ -30,7 +30,7 @@ namespace UIR_Service_B.Controllers
 
         // POST: api/Passes/Login
         [HttpPost("Login")]
-        public async Task<ActionResult<PassToken>> Login([FromBody] Pass pass)
+        public async Task<ActionResult<string>> Login([FromBody] Pass pass)
         {
             if (_context.Passes == null)
             {
@@ -64,7 +64,7 @@ namespace UIR_Service_B.Controllers
                 return NotFound();
             }
 
-            return passToken;
+            return passToken.Token;
         }
 
         // PUT: api/Passes/5
