@@ -18,7 +18,7 @@ using NuGet.Protocol;
 
 namespace UIR_Service_B.Controllers
 {
-/*    [Authorize]*/
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class RoomsController : ControllerBase

@@ -10,7 +10,7 @@ using UIR_WebAPI_1.Models;
 
 namespace UIR_WebAPI_1.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class SpecialistsController : ControllerBase
@@ -56,6 +56,58 @@ namespace UIR_WebAPI_1.Controllers
             return specialist;
         }
 
+        // GET: api/Specialists/Shedule/4
+        [HttpGet("Shedule/{id}")]
+        public async Task<ActionResult<(Specialist, IDictionary<DateTime, IEnumerable<RecordService>>)>> GetAppointmentCurrentSpec(int id)
+        {
+            var spec = await _context.Specialists
+                .Include(spec => spec.AppointmentCurrents)
+                .Include(spec => spec.SheduleTables).Where(spec => spec.SpecialistId == id).FirstOrDefaultAsync();
+            if (spec == null)
+                return NotFound();
+            Dictionary<DateTime, IEnumerable<RecordService>> recordsServices = new Dictionary<DateTime, IEnumerable<RecordService>>();
+            DateTime date = DateTime.Now.Date;
+
+            for (int i = 0; i < 7; i++)
+            {
+                bool flag = false;
+                var curShedule = spec.SheduleTables.Where(sh => sh.WeekdayId == date.DayOfWeek).FirstOrDefault();
+                if (curShedule == null)
+                {
+                    curShedule = new SheduleTable()
+                    {
+                        From1 = new TimeSpan(10, 0, 0),
+                        To1 = new TimeSpan(22, 0, 0),
+                        WeekdayId = date.DayOfWeek,
+                        LunchStart = new TimeSpan(13, 0, 0),
+                        LunchEnd = new TimeSpan(13, 30, 0),
+                        Price = 0,
+                        SpecialistId = spec.SpecialistId
+                    };
+                    flag = true;
+                }
+                recordsServices.Add(date, CreateShedule(curShedule, flag));
+                date = date.AddDays(1);
+            }
+            //Затычка
+            //Потом уже учет сушествующих записей. Их просчет на основе времени для прямого обращения.
+            foreach (var appointment in spec.AppointmentCurrents)
+            {
+                if (!recordsServices.ContainsKey(appointment.From1.Date))
+                    continue;
+                foreach (var record in recordsServices[appointment.From1.Date])
+                {
+                    if (record.From1 == appointment.From1)
+                    {
+                        record.IsBooked = true;
+                        break;
+                    }
+                }
+            }
+
+            return (spec, recordsServices);
+        }
+
         // PUT: api/Specialists/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
@@ -90,6 +142,20 @@ namespace UIR_WebAPI_1.Controllers
         private bool SpecialistExists(int id)
         {
             return (_context.Specialists?.Any(e => e.SpecialistId == id)).GetValueOrDefault();
+        }
+
+        private List<RecordService> CreateShedule(SheduleTable shedule, bool flag = false)
+        {
+            List<RecordService> result = new List<RecordService>();
+            TimeSpan buf = new TimeSpan(0, 30, 0);
+            DateTime today = DateTime.Now.Date;
+            for (TimeSpan start = shedule.From1; start < shedule.LunchStart; start = start + buf)
+                result.Add(new RecordService() { From1 = today.Add(start), To1 = today.Add(start + buf), IsBooked = false || flag, Price = (decimal)shedule.Price });
+            for (TimeSpan start = shedule.LunchStart; start < shedule.LunchEnd; start = start + buf)
+                result.Add(new RecordService() { From1 = today.Add(start), To1 = today.Add(start + buf), IsBooked = true || flag, Price = (decimal)shedule.Price });
+            for (TimeSpan start = shedule.LunchEnd; start < shedule.To1; start = start + buf)
+                result.Add(new RecordService() { From1 = today.Add(start), To1 = today.Add(start + buf), IsBooked = false || flag, Price = (decimal)shedule.Price });
+            return result;
         }
     }
 }

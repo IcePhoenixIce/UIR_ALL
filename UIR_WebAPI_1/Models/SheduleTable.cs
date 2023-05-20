@@ -17,5 +17,7 @@ public partial class SheduleTable
 
     public TimeSpan To1 { get; set; }
 
+    public double Price { get; set; }
+
     public virtual Specialist? Specialist { get; set; }
 }

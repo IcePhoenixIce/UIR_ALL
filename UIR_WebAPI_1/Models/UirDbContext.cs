@@ -15,17 +15,23 @@ public partial class UirDbContext : DbContext
     {
     }
 
+    public virtual DbSet<Area> Areas { get; set; }
+
     public virtual DbSet<AppointmentCurrent> AppointmentCurrents { get; set; }
 
     public virtual DbSet<AppointmentEnded> AppointmentEndeds { get; set; }
 
     public virtual DbSet<Pass> Passes { get; set; }
 
+    public virtual DbSet<PassGarmony> PassesGarmony { get; set; }
+
     public virtual DbSet<RatingScale> RatingScales { get; set; }
 
     public virtual DbSet<SheduleTable> SheduleTables { get; set; }
 
     public virtual DbSet<Specialist> Specialists { get; set; }
+
+    public virtual DbSet<Room> Rooms { get; set; }
 
     public virtual DbSet<UserTable> UserTables { get; set; }
 
@@ -35,6 +41,25 @@ public partial class UirDbContext : DbContext
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Area>(entity =>
+        {
+            entity.HasKey(e => e.AreaId).HasName("PK__Area__4256772EFD6BCDC8");
+
+            entity.ToTable("Area");
+
+            entity.Property(e => e.AreaId).HasColumnName("Area_ID");
+            entity.Property(e => e.AreaLocation)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("Area_Location");
+            entity.Property(e => e.AreaName)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("Area_Name");
+            entity.Property(e => e.From1).HasPrecision(0);
+            entity.Property(e => e.To1).HasPrecision(0);
+        });
+
         modelBuilder.Entity<AppointmentCurrent>(entity =>
         {
             entity.HasKey(e => e.AppointmentId).HasName("PK__Appointm__FD01B503B90BC8C5");
@@ -108,6 +133,29 @@ public partial class UirDbContext : DbContext
                 .HasConstraintName("R_28");
         });
 
+        modelBuilder.Entity<PassGarmony>(entity =>
+        {
+            entity.HasKey(e => e.SpecialistID).HasName("PK_Pass_Garmony");
+
+            entity.ToTable("Pass_Garmony");
+
+            entity.Property(e => e.SpecialistID)
+                .ValueGeneratedNever()
+                .HasColumnName("Specialist_ID");
+            entity.Property(e => e.Password)
+                .HasMaxLength(2000)
+                .IsUnicode(false)
+                .HasColumnName("Password");
+            entity.Property(e => e.Login)
+                .HasMaxLength(2000)
+                .IsUnicode(false)
+                .HasColumnName("Login");
+
+            entity.HasOne(d => d.Specialist).WithOne(p => p.PassDarmonyNavigation)
+                .HasForeignKey<PassGarmony>(d => d.SpecialistID)
+                .HasConstraintName("FK_Pass_Garmony_Specialist");
+        });
+
         modelBuilder.Entity<RatingScale>(entity =>
         {
             entity.HasKey(e => e.RatingId).HasName("PK__Rating_S__BE48C82598A677E7");
@@ -133,7 +181,7 @@ public partial class UirDbContext : DbContext
                 .HasPrecision(0)
                 .HasColumnName("Lunch_Start");
             entity.Property(e => e.To1).HasPrecision(0);
-
+            entity.Property(e => e.Price).HasColumnName("Price");
             entity.HasOne(d => d.Specialist).WithMany(p => p.SheduleTables)
                 .HasForeignKey(d => d.SpecialistId)
                 .HasConstraintName("R_3");
@@ -166,6 +214,46 @@ public partial class UirDbContext : DbContext
                 .HasForeignKey<Specialist>(d => d.SpecialistId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("R_2");
+
+            entity.HasMany(d => d.Rooms).WithMany(p => p.Specs)
+                .UsingEntity<Dictionary<string, object>>(
+                    "SpecRoom",
+                    r => r.HasOne<Room>().WithMany()
+                        .HasForeignKey("RoomId")
+                        .HasConstraintName("Spec_Rooms_Room_ID"),
+                    l => l.HasOne<Specialist>().WithMany()
+                        .HasForeignKey("SpecId")
+                        .HasConstraintName("Spec_Rooms_Spec_ID"),
+                    j =>
+                    {
+                        j.HasKey("SpecId", "RoomId");
+                        j.ToTable("Spec_Rooms");
+                        j.IndexerProperty<int>("SpecId").HasColumnName("Spec_ID");
+                        j.IndexerProperty<int>("RoomId").HasColumnName("Room_ID");
+                    });
+        });
+
+        modelBuilder.Entity<Room>(entity =>
+        {
+            entity.HasKey(e => e.RoomId).HasName("PK__Room__19EE6A737A370408");
+
+            entity.ToTable("Room");
+
+            entity.Property(e => e.RoomId).HasColumnName("Room_ID");
+            entity.Property(e => e.AdditionalInformation)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("Additional_information");
+            entity.Property(e => e.AreaId).HasColumnName("Area_ID");
+            entity.Property(e => e.RoomNumber)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("Room_Number");
+
+            entity.HasOne(d => d.Area).WithMany(p => p.Rooms)
+                .HasForeignKey(d => d.AreaId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("R_16");
         });
 
         modelBuilder.Entity<UserTable>(entity =>

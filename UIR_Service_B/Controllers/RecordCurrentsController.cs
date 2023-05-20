@@ -13,7 +13,7 @@ using static UIR_Service_B.Models.booking;
 
 namespace UIR_Service_B.Controllers
 {
-	//[Authorize]
+	[Authorize]
 	[Route("api/[controller]")]
 	[ApiController]
 	public class RecordCurrentsController : ControllerBase

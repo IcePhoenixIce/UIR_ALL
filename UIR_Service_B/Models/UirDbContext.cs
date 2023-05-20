@@ -22,6 +22,7 @@ public partial class UirDbContext : DbContext
     public virtual DbSet<InvitesEnded> InvitesEndeds { get; set; }
 
     public virtual DbSet<Pass> Passes { get; set; }
+
     public virtual DbSet<PassGarmony> PassesGarmony { get; set; }
 
     public virtual DbSet<RatingScale> RatingScales { get; set; }
@@ -229,7 +230,7 @@ public partial class UirDbContext : DbContext
                 .HasColumnName("Additional_information");
             entity.Property(e => e.AreaId).HasColumnName("Area_ID");
             entity.Property(e => e.RoomNumber)
-                .HasMaxLength(20)
+                .HasMaxLength(200)
                 .IsUnicode(false)
                 .HasColumnName("Room_Number");
 

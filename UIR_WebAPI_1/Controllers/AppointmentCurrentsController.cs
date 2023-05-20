@@ -1,16 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using UIR_WebAPI_1.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UIR_WebAPI_1.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
 	[ApiController]
 	public class AppointmentCurrentsController : ControllerBase
@@ -62,22 +64,27 @@ namespace UIR_WebAPI_1.Controllers
 		}
 
         // GET: api/AppointmentCurrents/Specialist/5
+        //перенести логику отсюда в spec
         [HttpGet("Specialist/{id}")]
 		public async Task<ActionResult<IEnumerable<AppointmentCurrent>>> GetAppointmentCurrentSpec(int id)
 		{
-			if (_context.AppointmentCurrents == null)
-			{
-				return NotFound();
-			}
-			var appointmentCurrents = await _context.AppointmentCurrents.Where(ac => ac.SpecialistId == id).ToListAsync();
+            if (_context.AppointmentCurrents == null)
+            {
+                return NotFound();
+            }
+            var appointmentCurrents = await _context.AppointmentCurrents
+                .Include(ac => ac.Specialist)
+                    .ThenInclude(ac => ac.SpecialistNavigation)
+                .Where(ac => ac.SpecialistId == id)
+                .ToListAsync();
 
-			if (appointmentCurrents == null)
-			{
-				return NotFound();
-			}
+            if (appointmentCurrents == null)
+            {
+                return NotFound();
+            }
 
-			return appointmentCurrents;
-		}
+            return appointmentCurrents;
+        }
 
 		// POST: api/AppointmentCurrents
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -90,10 +97,9 @@ namespace UIR_WebAPI_1.Controllers
 		  }
             if (appointmentCurrent.From1.TimeOfDay >= appointmentCurrent.To1.TimeOfDay)
                 return BadRequest("Время начало больше времени окончания приема");
-
-			//Затычка
             if (appointmentCurrent.From1.Date >= DateTime.Now.Date.AddDays(7))
                 return BadRequest("Можно записываться только на следующие ближайшие 6 дней");
+
             var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
             var SpecView = await _context.Specialists
                 .Include(spec => spec.SheduleTables)
@@ -169,5 +175,5 @@ namespace UIR_WebAPI_1.Controllers
 		{
 			return (_context.AppointmentCurrents?.Any(e => e.AppointmentId == id)).GetValueOrDefault();
 		}
-	}
+    }
 }

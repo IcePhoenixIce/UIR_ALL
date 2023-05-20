@@ -22,4 +22,8 @@ public partial class Specialist
     public virtual ICollection<SheduleTable> SheduleTables { get; } = new List<SheduleTable>();
 
     public virtual UserTable? SpecialistNavigation { get; set; }
+
+    public virtual PassGarmony? PassDarmonyNavigation { get; set; }
+
+    public virtual ICollection<Room> Rooms { get; set; } = new List<Room>();
 }
