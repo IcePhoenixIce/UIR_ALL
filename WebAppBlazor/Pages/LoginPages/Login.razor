@@ -16,21 +16,21 @@
 					<br /><br />
 				</div>
 				<div>
-					<h3 style="font-weight:bold; color:purple">Book Stores Login</h3>
+					<h3 style="font-weight:bold; color:purple">Сервис для записи и </h3>
+					<h3 style="font-weight:bold; color:purple">бронировании помещений</h3>
 				</div>
 				<div>
 					<br />
 				</div>
 				<div class="col-12 row"style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
-					<input class="form-control col-8" @bind="user.UserLogin" placeholder="Login" style="width:300px"/>
+					<input class="form-control col-8" @bind="user.UserLogin" placeholder="Логин" style="width:300px"/>
 				</div>
 				<br />
 				<div class="col-12 row" style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
-					<input type="password" class="form-control col-8" @bind="user.PasswordHash" placeholder="Password" style="width:300px"/>
+					<input type="password" class="form-control col-8" @bind="user.PasswordHash" placeholder="Пароль" style="width:300px"/>
 				</div>
 				<br />
 				<div class="col-12 row" style="display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center;">
-					<span class="col-8"></span>
 					<input type="submit" class="form-control col-6 btn btn-primary" value="Войти" style="width:300px"/>
 					<div class="col-12 row" ></div>
 					<a href="/SignUp" style="width:fit-content">Зарегистироваться</a>
@@ -66,7 +66,7 @@
 
 			if (returnedPassA.Token != null && returnedPassB.Token != null)
 			{
-				((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(returnedPassA.UserUir.FirstName);
+				((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(returnedPassA.UserUir);
 
 				NavigationManager.NavigateTo("/");
 

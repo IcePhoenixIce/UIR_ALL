@@ -18,7 +18,7 @@ using NuGet.Protocol;
 
 namespace UIR_Service_B.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class RoomsController : ControllerBase
@@ -45,7 +45,7 @@ namespace UIR_Service_B.Controllers
 
         // GET: api/Rooms/Room/1
         [HttpGet("Room/{id}")]
-        public async Task<ActionResult<(Room, IDictionary<DateTime, ICollection<RecordService>>)>> GetRoom(int id)
+        public async Task<ActionResult<(Room, IDictionary<DateTime, IEnumerable<RecordService>>)>> GetRoom(int id)
         {
             if (_context.Rooms == null)
             {
@@ -57,7 +57,7 @@ namespace UIR_Service_B.Controllers
                 .Where(r => r.RoomId == id)
                 .FirstOrDefaultAsync();
 
-            Dictionary<DateTime, ICollection<RecordService>> recordsServices = new Dictionary<DateTime, ICollection<RecordService>>();
+            Dictionary<DateTime, IEnumerable<RecordService>> recordsServices = new Dictionary<DateTime, IEnumerable<RecordService>>();
             Dictionary<string, string> data = new Dictionary<string, string>();
             DateTime date = DateTime.Now.Date;
 

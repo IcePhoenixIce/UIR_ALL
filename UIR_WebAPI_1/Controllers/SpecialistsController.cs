@@ -10,7 +10,7 @@ using UIR_WebAPI_1.Models;
 
 namespace UIR_WebAPI_1.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class SpecialistsController : ControllerBase
@@ -43,8 +43,9 @@ namespace UIR_WebAPI_1.Controllers
           }
             var specialist = await _context.Specialists
                 .Include(user => user.SpecialistNavigation)
-                .Include(specialist => specialist.SheduleTables)
-                .Include(specialist => specialist.AppointmentCurrents)
+                /*.Include(specialist => specialist.SheduleTables)
+                .Include(specialist => specialist.AppointmentCurrents)*/
+                .Include(spec => spec.Rooms)
                 .Where(specialist => specialist.SpecialistId == id)
                 .FirstOrDefaultAsync();
 
@@ -81,15 +82,14 @@ namespace UIR_WebAPI_1.Controllers
                         WeekdayId = date.DayOfWeek,
                         LunchStart = new TimeSpan(13, 0, 0),
                         LunchEnd = new TimeSpan(13, 30, 0),
-                        Price = 0,
+                        Price = spec.SheduleTables.First().Price,
                         SpecialistId = spec.SpecialistId
                     };
                     flag = true;
                 }
-                recordsServices.Add(date, CreateShedule(curShedule, flag));
+                recordsServices.Add(date, CreateShedule(curShedule, date, flag));
                 date = date.AddDays(1);
             }
-            //Затычка
             //Потом уже учет сушествующих записей. Их просчет на основе времени для прямого обращения.
             foreach (var appointment in spec.AppointmentCurrents)
             {
@@ -144,17 +144,16 @@ namespace UIR_WebAPI_1.Controllers
             return (_context.Specialists?.Any(e => e.SpecialistId == id)).GetValueOrDefault();
         }
 
-        private List<RecordService> CreateShedule(SheduleTable shedule, bool flag = false)
+        private List<RecordService> CreateShedule(SheduleTable shedule, DateTime date, bool flag = false)
         {
             List<RecordService> result = new List<RecordService>();
             TimeSpan buf = new TimeSpan(0, 30, 0);
-            DateTime today = DateTime.Now.Date;
             for (TimeSpan start = shedule.From1; start < shedule.LunchStart; start = start + buf)
-                result.Add(new RecordService() { From1 = today.Add(start), To1 = today.Add(start + buf), IsBooked = false || flag, Price = (decimal)shedule.Price });
+                result.Add(new RecordService() { From1 = date.Add(start), To1 = date.Add(start + buf), IsBooked = false || flag, Price = (decimal)shedule.Price });
             for (TimeSpan start = shedule.LunchStart; start < shedule.LunchEnd; start = start + buf)
-                result.Add(new RecordService() { From1 = today.Add(start), To1 = today.Add(start + buf), IsBooked = true || flag, Price = (decimal)shedule.Price });
+                result.Add(new RecordService() { From1 = date.Add(start), To1 = date.Add(start + buf), IsBooked = true || flag, Price = (decimal)shedule.Price });
             for (TimeSpan start = shedule.LunchEnd; start < shedule.To1; start = start + buf)
-                result.Add(new RecordService() { From1 = today.Add(start), To1 = today.Add(start + buf), IsBooked = false || flag, Price = (decimal)shedule.Price });
+                result.Add(new RecordService() { From1 = date.Add(start), To1 = date.Add(start + buf), IsBooked = false || flag, Price = (decimal)shedule.Price });
             return result;
         }
     }

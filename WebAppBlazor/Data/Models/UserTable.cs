@@ -25,7 +25,7 @@ public partial class UserTable
 
     public virtual Pass? Pass { get; set; }
 
-	//public virtual Specialist? Specialist { get; set; }
+	public virtual Specialist? Specialist { get; set; }
 
 	public UserTable() { }
 	public UserTable(UserTable user) 

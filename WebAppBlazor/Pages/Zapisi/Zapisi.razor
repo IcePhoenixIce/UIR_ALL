@@ -12,30 +12,33 @@
 
 
 <button class="btn btn-primary" @onclick="CreateZapis">Записаться</button>
-<RadzenDataList WrapItems="true" AllowPaging="false" Data="@acrcList" TItem="(AppointmentCurrent, RecordCurrent)">
+<RadzenDataList WrapItems="true" AllowPaging="false" Data="@acrcList" TItem="AppointmentRecord">
         <Template Context="order">
             <RadzenCard Style="width:300px;">
                 <div class="d-flex flex-row align-items-center">
                     <div >
-                        <h4 class="mb-0">@(@order.Item1.Specialist.SpecialistNavigation.FirstName + " " + @order.Item1.Specialist.SpecialistNavigation.LastName)</h4>
-                        <div>@order.Item1.Specialist.Specialization</div>
+                    <h4 class="mb-0">@(@order.Appointment.Specialist.SpecialistNavigation.FirstName + " " + @order.Appointment.Specialist.SpecialistNavigation.LastName)</h4>
+                    <div>@order.Appointment.Specialist.Specialization</div>
                         <br/>
-                        <h7 class="mb-0" style="color:forestgreen">@(@order.Item1.From1.ToString() + " - " + @order.Item1.To1.ToString())</h7>
+                    <h7 class="mb-0" style="color:forestgreen">@(@order.Appointment.From1.ToString() + " - " + @order.Appointment.To1.ToString())</h7>
                     </div>
                     <div>
-                        
+                    
                     </div>
                 </div>
                 <hr style="border: none; background-color: rgba(0,0,0,.08); height: 1px; margin: 1rem 0;" />
                 <div class="row">
-                    <div style="font-size: .8em">Адрес: @(order.Item2.Room.Area.AreaLocation), @(order.Item2.Room.Area.AreaName). Комната: @(order.Item2.Room.RoomNumber)</div>
-@*                    <div class="col-md-8 text-truncate">
-                        <b>@(order.ShipName)</b>
-                    </div>*@
-@*                    <div class="col-md-4 text-end">
-                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text=@($"{String.Format(new System.Globalization.CultureInfo("en-US"), "{0:C}", order.Freight)}") />
-                    </div>*@
-                    <a style="text-underline-position:below; cursor:pointer; color:red" @onclick="@(e => deleteOrder(@order.Item1.AppointmentId))">Отменить</a>
+                @if(order.Record != null)
+                {
+                    <div style="font-size: .8em">Адрес: @(order.Record.Room.Area.AreaLocation), @(order.Record.Room.Area.AreaName). Комната: @(order.Record.Room.RoomNumber)</div>
+                }
+                else
+                {
+                    <div class="col-md-8 text-truncate">
+                        <b>Упрощенная встреча</b>
+                    </div>
+                }
+                <a style="text-underline-position:below; cursor:pointer; color:red" @onclick="@(e => deleteOrder(@order))">Отменить</a>
                 </div>
             </RadzenCard>
         </Template>
@@ -43,11 +46,12 @@
 <RadzenPager ShowPagingSummary="true" PagingSummaryFormat="@pagingSummaryFormat" HorizontalAlign="HorizontalAlign.Right" Count="count" PageSize="@pageSize" PageNumbersCount="5" PageChanged="@PageChanged" />
 @code {
     string pagingSummaryFormat = "Displaying page {0} of {1} (total {2} records)";
-    int pageSize = 9;
+    int pageSize = 4;
     int currentNum;
     int count;
-    IEnumerable<(AppointmentCurrent, RecordCurrent)> acrcList;
-    List<(AppointmentCurrent, RecordCurrent)> _acrcList;
+    UserTable userFromJson;
+    IEnumerable<AppointmentRecord> acrcList;
+    List<AppointmentRecord> _acrcList;
     List<AppointmentCurrent> _appointments;
     List<RecordCurrent> _records;
 
@@ -55,25 +59,42 @@
     {
         await base.OnInitializedAsync();
         var userJson = await localStorage.GetItemAsync<string>("user");
-        var userFromJson = JsonConvert.DeserializeObject<UserTable>(userJson);
+        userFromJson = JsonConvert.DeserializeObject<UserTable>(userJson);
         _appointments = (await acs.UserAsync(userFromJson.UserUirId)).ToList();
         _records = (await rcs.UserAsync(userFromJson.UserUirId)).ToList();
-        _acrcList = assignLists(_appointments, _records);
+        _acrcList = _appointments.GroupJoin(_records,
+            a => a.From1,
+            r => r.From1,
+            (a, rs) => new AppointmentRecord { Appointment = a, Record = rs.FirstOrDefault() })
+            .OrderBy(ar => ar.Appointment.From1).ToList();
         count = _acrcList.Count();
-        currentNum = count;
-        if (currentNum > pageSize)
-            currentNum = pageSize;
-        acrcList = _acrcList.GetRange(0, currentNum);
+        acrcList = getAR(0, pageSize);
     }
 
     void PageChanged(PagerEventArgs args)
     {
-        acrcList = _acrcList.GetRange(args.Skip, args.Top);
+        acrcList = getAR(args.Skip, args.Top);
     }
 
-    void deleteOrder(int id)
+    IEnumerable<AppointmentRecord> getAR(int skip, int take)
     {
-        //Заглушка
+        return _acrcList.Skip(skip).Take(take);
+    }
+
+    async void deleteOrder(AppointmentRecord ar)
+    {
+        bool f1, f2;
+        if (ar.Record != null)
+            f1 = await rcs.DeleteAsync(ar.Record.RecordId);
+        else
+            f1 = true;
+        f2 = await acs.DeleteAppointmentCurrentUser(ar.Appointment.AppointmentId);
+        if (f1 && f2)
+        {
+            _acrcList.Remove(ar);
+            acrcList = getAR(0, pageSize);
+        }
+        await InvokeAsync(StateHasChanged);
     }
 
     void CreateZapis()
@@ -81,18 +102,9 @@
         NavigationManager.NavigateTo("/Zapisi/Add");
     }
 
-
-    List<(AppointmentCurrent, RecordCurrent)> assignLists(List<AppointmentCurrent> acList, List<RecordCurrent> rcList)
+    class AppointmentRecord
     {
-        var acrcList = new List<(AppointmentCurrent, RecordCurrent)>();
-        foreach (var ac in acList)
-        {
-            foreach (var rc in rcList)
-            {
-                if (ac.From1 == rc.From1 && ac.To1 == rc.To1)
-                    acrcList.Add((ac, rc));
-            }
-        }
-        return acrcList;
+        public AppointmentCurrent Appointment { get; set; }
+        public RecordCurrent Record { get; set; }
     }
 }

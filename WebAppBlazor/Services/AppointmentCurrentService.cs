@@ -3,6 +3,8 @@ using System.Text;
 using WebAppBlazor.Data.Models;
 using System.Security.Cryptography;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Mvc;
+using Radzen.Blazor.Rendering;
 
 namespace WebAppBlazor.Services
 {
@@ -68,6 +70,21 @@ namespace WebAppBlazor.Services
                 return await Task.FromResult(returned_user);
             }
             return null;
+        }
+
+		public async Task<bool> DeleteAppointmentCurrentUser(int id) 
+		{
+            string serializeAppointment = JsonConvert.SerializeObject(id);
+            var requstMassage = new HttpRequestMessage(HttpMethod.Delete, $"{id}");
+            var token = await _localStorageService.GetItemAsync<string>("tokenA");
+            requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            requstMassage.Content = new StringContent(serializeAppointment);
+            requstMassage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json-patch+json");
+            var response = await _httpClient.SendAsync(requstMassage);
+            var responseStatusCode = response.StatusCode;
+            if (responseStatusCode == System.Net.HttpStatusCode.NoContent)
+                return true;
+            throw new Exception("ServerError!");
         }
     }
 }

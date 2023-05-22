@@ -34,23 +34,41 @@ namespace WebAppBlazor.Services
             throw new Exception("ServerError!");
         }
 
-        public async Task<RecordCurrent?> PostRecordAsync(RecordCurrent record)
+        public async Task<RecordCurrent?> PostRecordAsync(RecordCurrent record, int specialistID, decimal price)
         {
-            string serializeAppointment = JsonConvert.SerializeObject(record);
+            var parameters = new Dictionary<string, object>();
+            parameters.Add("recordCurrent", record);
+            parameters.Add("specialistID", specialistID);
+            parameters.Add("price", price);
+
+            // Создаем объект HttpContent, который содержит наши параметры в формате JSON
+            var content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             var requstMassage = new HttpRequestMessage(HttpMethod.Post, "User");
             var token = await _localStorageService.GetItemAsync<string>("tokenB");
             requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            requstMassage.Content = new StringContent(serializeAppointment);
+            requstMassage.Content = content;
             requstMassage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json-patch+json");
             var response = await _httpClient.SendAsync(requstMassage);
-            var responseStatusCode = response.StatusCode;
-            if (responseStatusCode == System.Net.HttpStatusCode.Created)
+            if (response.StatusCode == System.Net.HttpStatusCode.Created)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
                 var returned_user = JsonConvert.DeserializeObject<RecordCurrent>(responseBody);
                 return await Task.FromResult(returned_user);
             }
             return null;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var requstMassage = new HttpRequestMessage(HttpMethod.Delete, $"{id}");
+            var token = await _localStorageService.GetItemAsync<string>("tokenB");
+            requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _httpClient.SendAsync(requstMassage);
+            var responseStatusCode = response.StatusCode;
+            if (responseStatusCode == System.Net.HttpStatusCode.NoContent)
+                return true;
+            throw new Exception("ServerError!");
         }
     }
 }

@@ -40,6 +40,7 @@ namespace UIR_WebAPI_1.Controllers
             }
             var pass1 = await _context.Passes
                 .Include(p => p.UserUir)
+                .ThenInclude(u => u.Specialist)
                 .Where(p => p.UserLogin == pass.UserLogin
                      && p.PasswordHash == pass.PasswordHash)
                 .FirstOrDefaultAsync();

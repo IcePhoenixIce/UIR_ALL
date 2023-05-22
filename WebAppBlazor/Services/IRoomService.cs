@@ -4,7 +4,7 @@ namespace WebAppBlazor.Services
 {
     public interface IRoomService
 	{
-        public Task<IEnumerable<Room>?> RoomsAsync(int areaId);
-        public Task<Room?> RoomAsync(int id);
+        public Task<ICollection<Room>?> RoomsAsync(int areaId);
+        public Task<(Room, IDictionary<DateTime, IEnumerable<RecordService>>)?> RoomAsync(int id);
     }
 }

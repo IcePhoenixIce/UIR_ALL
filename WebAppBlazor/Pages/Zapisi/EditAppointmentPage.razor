@@ -5,53 +5,89 @@
 @inject IAppointmentCurrentService acs
 @inject NavigationManager NavigationManager
 
-<RadzenTemplateForm TItem="DataItem" Data="@model" Submit=@OnSubmit>
-<div class="row" style="margin-bottom: 16px">
-    <div class="col-md-3">
-        <RadzenLabel Text="Начало" />
+<RadzenTemplateForm TItem="RecordService" Submit=@OnSubmit>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Специалист: " />
+        </div>
+        <div class="col">
+            <RadzenLabel Text="@specialist.Specialization" />
+        </div>
     </div>
-    <div class="col">
-        <RadzenDatePicker @bind-Value="@model.Start" Name="Start" ShowTime="true" />
-        <RadzenRequiredValidator Text="Start is required" Component="Start" />
-    </div>
-</div>
-<div class="row" style="margin-bottom: 16px">
-    <div class="col-md-3">
-        <RadzenLabel Text="Конец" />
-    </div>
-    <div class="col">
-        <RadzenDatePicker Name="End" @bind-Value="@model.End" ShowTime="true" />
-        <RadzenRequiredValidator Component="End" Text="End is required" />
-    </div>
-</div>
-<div class="row">
-    <ValidationMess IsVisible=@IsVisible result=1 renderFragment=@MessageString />
-    <br/>
-    <br/>
-</div>
 
-<div class="row">
-    <div class="col-md-3"></div>
-    <div class="col">
-        <RadzenButton ButtonType="ButtonType.Submit" Text="Save" />
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="ФИО: " />
+        </div>
+        <div class="col">
+            <RadzenLabel Text="@specialist_str" />
+        </div>
     </div>
-</div>
+    @if (!simple)
+    {
+        <div class="row" style="margin-bottom: 16px">
+            <div class="col-md-3">
+                <RadzenLabel Text="Комната: " />
+            </div>
+            <div class="col">
+                <RadzenLabel Text="@room_str" />
+            </div>
+        </div>
+
+        <div class="row" style="margin-bottom: 16px">
+            <div class="col-md-3">
+                <RadzenLabel Text="Адрес: " />
+            </div>
+            <div class="col">
+                <RadzenLabel Text="@adress" />
+            </div>
+        </div>
+    }
+    
+    
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Цена: " />
+        </div>
+        <div class="col">
+            <RadzenLabel Text="@Appointment.PriceStr" />
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-md-3"></div>
+        <div class="col">
+            <RadzenButton Click=@(args => OnSubmit()) Text="Сохранить!" />
+        </div>
+    </div>
 
 </RadzenTemplateForm>
 @code {
     [Parameter]
-    public DataItem Appointment { get; set; }
+    public RecordService Appointment { get; set; }
 
     [Parameter]
-    public int SpecialistId { get; set; }
+    public SpecialistName specialist { get; set; }
+
+    public string specialist_str { get; set; }
 
     [Parameter]
     public int UserId { get; set; }
 
     [Parameter]
-    public int RoomId { get; set; }
+    public Room room { get; set; }
 
-    DataItem model;
+    [Parameter]
+    public Area area { get; set; }
+
+    [Parameter]
+    public bool simple { get; set; }
+
+    public string room_str { get; set; }
+
+    public string adress { get; set; }
+
 
     bool IsVisible = false;
 
@@ -60,7 +96,12 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        model = new DataItem(Appointment.Start, Appointment.End);
+        specialist_str = specialist.FirstName + " " + specialist.LastName + " " + specialist.MiddleName;
+        if(!simple)
+        {
+            room_str = room.RoomNumber;
+            adress = area.AreaLocation;
+        }
     }
 
     protected override void OnParametersSet()
@@ -68,58 +109,59 @@
         base.OnParametersSet();
     }
 
-    async Task<bool> OnSubmit(DataItem model)
+    async Task<bool> OnSubmit()
     {
-        //заглушка
-        if (model.Start < Appointment.Start || model.End > Appointment.End || model.End <= model.Start)
+        var appointment = new AppointmentCurrent 
+            { 
+                UserUirId = UserId,
+                SpecialistId = specialist.SpecialistId,
+                From1 = Appointment.From1,
+                To1 = Appointment.To1
+            };
+
+        appointment = await acs.PostAppointmentAsync(appointment);
+
+        if (appointment == null)
         {
+            MessageString = "Запись не выполнена, попробуйте записаться еще раз!";
             IsVisible = true;
-            model.Start = Appointment.Start; 
-            model.End = Appointment.End;
+            await InvokeAsync(StateHasChanged);
+            Thread.Sleep(5000);
+            DialogService.Close();
+            NavigationManager.NavigateTo("/Zapisi/Add");               
             return await Task.FromResult(false);
-        } 
-        else
+        }
+
+        if (simple)
         {
-            var record = new RecordCurrent 
-            { 
-                UserUirId = UserId,
-                RoomId = RoomId,
-                From1 = model.Start,
-                To1 = model.End,
-                InvitesCurrent = new List<InvitesCurrent> 
-                { 
-                    new InvitesCurrent
-                    { 
-                        UserUirId = SpecialistId
-                    } 
-                } 
-            };
-            var appointment = new AppointmentCurrent 
-            { 
-                UserUirId = UserId,
-                SpecialistId = SpecialistId,
-                From1 = model.Start,
-                To1 = model.End
-            };
-            record = await rcs.PostRecordAsync(record);
-            appointment = await acs.PostAppointmentAsync(appointment);
-
-            if (record == null || appointment == null)
-            {
-                MessageString = "Запись не выполнена, попробуйте записаться еще раз!";
-                IsVisible = true;
-                await InvokeAsync(StateHasChanged);
-                Thread.Sleep(5000);
-                DialogService.Close(model);
-                NavigationManager.NavigateTo("/Zapisi/Add");
-                //Заглушка удаления
-
-                return await Task.FromResult(false);
-            }
-            DialogService.Close(model);
+            DialogService.Close();
             NavigationManager.NavigateTo("/User/Appointmets");
             return await Task.FromResult(true);
         }
-        
+
+        var record = new RecordCurrent
+            {
+                UserUirId = UserId,
+                RoomId = room.RoomId,
+                From1 = Appointment.From1,
+                To1 = Appointment.To1,
+                InvitesCurrents = new List<InvitesCurrent>()
+            };
+        record = await rcs.PostRecordAsync(record, specialist.SpecialistId, Appointment.PriceRoom);
+
+        if (record == null)
+        {
+            MessageString = "Запись не выполнена, попробуйте записаться еще раз!";
+            IsVisible = true;
+            await InvokeAsync(StateHasChanged);
+            Thread.Sleep(5000);
+            DialogService.Close();
+            NavigationManager.NavigateTo("/Zapisi/Add");
+            await acs.DeleteAppointmentCurrentUser(appointment.AppointmentId);
+            return await Task.FromResult(false);
+        }
+        DialogService.Close();
+        NavigationManager.NavigateTo("/User/Appointmets");
+        return await Task.FromResult(true);
     }
 }

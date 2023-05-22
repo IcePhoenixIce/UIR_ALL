@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Xml.Linq;
+using WebAppBlazor.Data.Models;
 
 namespace WebAppBlazor.Data
 {
@@ -42,13 +43,17 @@ namespace WebAppBlazor.Data
 			return await Task.FromResult(new AuthenticationState(user));
 		}
 
-		public void MarkUserAsAuthenticated(string name) 
+		public void MarkUserAsAuthenticated(UserTable userTable) 
 		{
-			var identity = new ClaimsIdentity(
-				new[]
+			string role = "Client";
+			if (userTable.Specialist != null) role = "Specialist";
+            var claims = new List<Claim>
 				{
-					new Claim(ClaimTypes.Name, name),
-				}, "apiauth_type");
+					new Claim(ClaimTypes.NameIdentifier, userTable.UserUirId.ToString()),
+					new Claim(ClaimTypes.Name, userTable.LastName+" "+userTable.FirstName+" "+userTable.MiddleName),
+					new Claim(ClaimTypes.Role, role)
+				};
+            var identity = new ClaimsIdentity(claims, "apiauth_type");
 			var user = new ClaimsPrincipal(identity);
 
 			NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));

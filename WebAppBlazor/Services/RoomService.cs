@@ -17,7 +17,7 @@ namespace WebAppBlazor.Services
 			_localStorageService = localStorageService;
         }
 
-        public async Task<IEnumerable<Room>?> RoomsAsync(int areaId)
+        public async Task<ICollection<Room>?> RoomsAsync(int areaId)
         {
             var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"{areaId}");
             var token = await _localStorageService.GetItemAsync<string>("tokenB");
@@ -34,7 +34,7 @@ namespace WebAppBlazor.Services
             throw new NotImplementedException();
         }
 
-        public async Task<Room?> RoomAsync(int id)
+        public async Task<(Room, IDictionary<DateTime, IEnumerable<RecordService>>)?> RoomAsync(int id)
         {
             var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"Room/{id}");
             var token = await _localStorageService.GetItemAsync<string>("tokenB");
@@ -45,7 +45,7 @@ namespace WebAppBlazor.Services
             if (responseStatusCode == System.Net.HttpStatusCode.OK)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
-                var returned_user = JsonConvert.DeserializeObject<Room?>(responseBody);
+                var returned_user = JsonConvert.DeserializeObject<(Room, IDictionary<DateTime, IEnumerable<RecordService>>)?>(responseBody);
                 return await Task.FromResult(returned_user);
             }
             throw new NotImplementedException();
