@@ -10,7 +10,7 @@ using UIR_WebAPI_1.Models;
 
 namespace UIR_WebAPI_1.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class SheduleTablesController : ControllerBase
@@ -97,18 +97,18 @@ namespace UIR_WebAPI_1.Controllers
                 }
             }
 
-            return CreatedAtAction("GetSheduleTable", new { id = sheduleTable.SpecialistId }, sheduleTable);
+            return NoContent();
         }
 
         // DELETE: api/SheduleTables/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteSheduleTable(int id)
+        [HttpDelete("{UserId}/{WeekId}")]
+        public async Task<IActionResult> DeleteSheduleTable(int UserId, int WeekId )
         {
             if (_context.SheduleTables == null)
             {
                 return NotFound();
             }
-            var sheduleTable = await _context.SheduleTables.FindAsync(id);
+            var sheduleTable = await _context.SheduleTables.Where(st => st.SpecialistId == UserId && (int)st.WeekdayId == WeekId).FirstOrDefaultAsync();
             if (sheduleTable == null)
             {
                 return NotFound();

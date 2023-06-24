@@ -1,18 +1,17 @@
-п»ї@page "/counter"
+@page "/"
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Counter</PageTitle>
+<AuthorizeView>
+    <Authorized>
+        <h1>Здравствуйте, @context.User.Identity?.Name!</h1>
+    </Authorized>
+    <NotAuthorized>
+        <h1>Здравствуйте, пройдите авторизацию или зарегистрируйтесь!</h1>
+    </NotAuthorized>
+</AuthorizeView>
 
-<h1>Counter</h1>
-
-<p role="status">Current count: @currentCount</p>
-
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
 @code {
-    private int currentCount = 0;
 
-    private void IncrementCount()
-    {
-        currentCount++;
-    }
 }

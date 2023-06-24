@@ -15,4 +15,12 @@
             set { Price = Convert.ToDecimal(value); } 
         }
     }
+
+	public class RecordShedule : RecordService
+	{
+        public SheduleTable sheduleTable { get; set; }
+        public DateTime LunchEnd { get; set; }
+        public DateTime LunchStart { get; set; }
+		public string info { get; set; }
+	}
 }

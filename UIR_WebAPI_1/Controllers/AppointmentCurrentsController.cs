@@ -52,7 +52,7 @@ namespace UIR_WebAPI_1.Controllers
 			var appointmentCurrents = await _context.AppointmentCurrents
 				.Include(ac=>ac.Specialist)
 					.ThenInclude(ac=>ac.SpecialistNavigation)
-				.Where(ac => ac.UserUirId == id)
+                .Where(ac => ac.UserUirId == id)
 				.ToListAsync();
 
 			if (appointmentCurrents == null)
@@ -73,8 +73,7 @@ namespace UIR_WebAPI_1.Controllers
                 return NotFound();
             }
             var appointmentCurrents = await _context.AppointmentCurrents
-                .Include(ac => ac.Specialist)
-                    .ThenInclude(ac => ac.SpecialistNavigation)
+                .Include(ac => ac.UserUir)
                 .Where(ac => ac.SpecialistId == id)
                 .ToListAsync();
 

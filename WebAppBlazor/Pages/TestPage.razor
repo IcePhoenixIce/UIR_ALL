@@ -1,0 +1,26 @@
+@page "/example" 
+@using Microsoft.AspNetCore.Components.Forms 
+@using System.Text.Json
+@inject IJSRuntime JS
+@attribute [Authorize]
+
+<button @onclick="MakeRequest">Make request</button>
+<div>@response</div>
+
+@code {
+  private string response;
+
+  private async Task MakeRequest()
+  {
+    try
+    {
+        JsonElement json = await JS.InvokeAsync<JsonElement>("window.myFunctions.getJson", "POST", "email=savdavid2%40gmail.com&pass=IcePhoenix312&action=login", "https://a-n-h.space/wp-admin/admin-ajax.php");
+        var result = json.GetProperty("result").GetString();
+        response = result;
+    }
+    catch (Exception ex)
+    {
+        response = ex.Message;
+    }
+  }
+}

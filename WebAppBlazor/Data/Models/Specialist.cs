@@ -15,17 +15,17 @@ public partial class Specialist
 
     public string? AdditionalInfo { get; set; }
 
-    public virtual ICollection<AppointmentCurrent> AppointmentCurrents { get; } = new List<AppointmentCurrent>();
+    public virtual ICollection<AppointmentCurrent>? AppointmentCurrents { get; set; }
 
-    public virtual ICollection<AppointmentEnded> AppointmentEndeds { get; } = new List<AppointmentEnded>();
+    public virtual ICollection<AppointmentEnded>? AppointmentEndeds { get; set; }
 
-    public virtual ICollection<SheduleTable> SheduleTables { get; } = new List<SheduleTable>();
+    public virtual ICollection<SheduleTable>? SheduleTables { get; set; }
 
     public virtual UserTable? SpecialistNavigation { get; set; }
 
-    public virtual PassGarmony? PassDarmonyNavigation { get; set; }
+    public virtual PassGarmony? PassGarmonyNavigation { get; set; }
 
-    public virtual ICollection<Room> Rooms { get; set; } = new List<Room>();
+    public virtual ICollection<Room>? Rooms { get; set; }
 }
 
 public partial class SpecialistName : Specialist
@@ -41,13 +41,17 @@ public partial class SpecialistName : Specialist
         this.Degree = s.Degree;
         this.Experience = s.Experience;
         this.AdditionalInfo = s.AdditionalInfo;
+        this.AppointmentCurrents = s.AppointmentCurrents;
+        this.AppointmentEndeds = s.AppointmentEndeds;
+        this.SheduleTables = s.SheduleTables;
+        this.SpecialistNavigation = s.SpecialistNavigation;
+        this.PassGarmonyNavigation = s.PassGarmonyNavigation;
+        this.Rooms = s.Rooms;
         if (s.SpecialistNavigation != null)
         {
             this.LastName = s.SpecialistNavigation.LastName;
             this.FirstName = s.SpecialistNavigation.FirstName;
             this.MiddleName = s.SpecialistNavigation.MiddleName;
         }
-        if(s.Rooms != null)
-            this.Rooms = s.Rooms;
     }
 }

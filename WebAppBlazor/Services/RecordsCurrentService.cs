@@ -34,22 +34,33 @@ namespace WebAppBlazor.Services
             throw new Exception("ServerError!");
         }
 
-        public async Task<RecordCurrent?> PostRecordAsync(RecordCurrent record, int specialistID, decimal price)
+        public async Task<IEnumerable<RecordCurrent>> SpecAsync(int id)
         {
-            var parameters = new Dictionary<string, object>();
-            parameters.Add("recordCurrent", record);
-            parameters.Add("specialistID", specialistID);
-            parameters.Add("price", price);
+            var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"Spec/{id}");
+            var token = await _localStorageService.GetItemAsync<string>("tokenB");
+            requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-            // Создаем объект HttpContent, который содержит наши параметры в формате JSON
-            var content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
+            var response = await _httpClient.SendAsync(requstMassage);
+            var responseStatusCode = response.StatusCode;
+            if (responseStatusCode == System.Net.HttpStatusCode.OK)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                var returned_user = JsonConvert.DeserializeObject<List<RecordCurrent>?>(responseBody);
+                return await Task.FromResult(returned_user);
+            }
+            throw new Exception("ServerError!");
+        }
+
+        public async Task<RecordCurrent?> PostRecordAsync(RecordCurrent record)
+        {
+            string serializeAppointment = JsonConvert.SerializeObject(record);
             var requstMassage = new HttpRequestMessage(HttpMethod.Post, "User");
             var token = await _localStorageService.GetItemAsync<string>("tokenB");
             requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            requstMassage.Content = content;
+            requstMassage.Content = new StringContent(serializeAppointment);
             requstMassage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json-patch+json");
             var response = await _httpClient.SendAsync(requstMassage);
-            if (response.StatusCode == System.Net.HttpStatusCode.Created)
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
                 var returned_user = JsonConvert.DeserializeObject<RecordCurrent>(responseBody);

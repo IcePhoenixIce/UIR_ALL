@@ -5,7 +5,8 @@ namespace WebAppBlazor.Services
     public interface IRecordsCurrentService
     {
         public Task<IEnumerable<RecordCurrent>> UserAsync(int id);
-        public Task<RecordCurrent?> PostRecordAsync(RecordCurrent record, int specialistID, decimal price);
+        public Task<IEnumerable<RecordCurrent>> SpecAsync(int id);
+        public Task<RecordCurrent?> PostRecordAsync(RecordCurrent record);
         public Task<bool> DeleteAsync(int id);
     }
 }

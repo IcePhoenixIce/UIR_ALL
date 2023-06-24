@@ -1,0 +1,99 @@
+@page "/Spec/Appointmets"
+@using WebAppBlazor.Data;
+@using WebAppBlazor.Data.Models;
+@using WebAppBlazor.Services;
+@using Newtonsoft.Json;
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject IAppointmentCurrentService acs
+@inject IRecordsCurrentService rcs
+
+
+<AuthorizeView Roles="Specialist">
+    <RadzenDataList WrapItems="true" AllowPaging="false" Data="@acrcList" TItem="AppointmentRecord">
+        <Template Context="order">
+            <RadzenCard Style="width:300px;">
+                <div class="d-flex flex-row align-items-center">
+                    <div>
+                        <h4 class="mb-0">@(@order.Appointment.UserUir.FirstName + " " + @order.Appointment.UserUir.LastName)</h4>
+                        <h7 class="mb-0" style="color:forestgreen">@(@order.Appointment.From1.ToString() + " - " + @order.Appointment.To1.ToString())</h7>
+                    </div>
+                    <div>
+                    </div>
+                </div>
+                <hr style="border: none; background-color: rgba(0,0,0,.08); height: 1px; margin: 1rem 0;" />
+                <div class="row">
+                    @if (order.Record != null)
+                    {
+                        <div style="font-size: .8em">Адрес: @(order.Record.Room.Area.AreaLocation), @(order.Record.Room.Area.AreaName). Комната: @(order.Record.Room.RoomNumber)</div>
+                    }
+                    else
+                    {
+                        <div class="col-md-8 text-truncate">
+                            <b>Упрощенная встреча</b>
+                        </div>
+                    }
+                </div>
+            </RadzenCard>
+        </Template>
+    </RadzenDataList>
+    <RadzenPager ShowPagingSummary="true" PagingSummaryFormat="@pagingSummaryFormat" HorizontalAlign="HorizontalAlign.Right" Count="count" PageSize="@pageSize" PageNumbersCount="5" PageChanged="@PageChanged" />
+</AuthorizeView>
+@code {
+    string pagingSummaryFormat = "Displaying page {0} of {1} (total {2} records)";
+    int pageSize = 4;
+    int currentNum;
+    int count;
+    UserTable userFromJson;
+    IEnumerable<AppointmentRecord> acrcList;
+    List<AppointmentRecord> _acrcList;
+    List<AppointmentCurrent> _appointments;
+    List<RecordCurrent> _records;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        var userJson = await localStorage.GetItemAsync<string>("user");
+        userFromJson = JsonConvert.DeserializeObject<UserTable>(userJson);
+        _appointments = (await acs.SpecialistAsync(userFromJson.UserUirId)).ToList();
+        _records = (await rcs.SpecAsync(userFromJson.UserUirId)).ToList();
+        _acrcList = _appointments.GroupJoin(_records,
+            a => a.From1,
+            r => r.From1,
+            (a, rs) => new AppointmentRecord { Appointment = a, Record = rs.FirstOrDefault() })
+            .OrderBy(ar => ar.Appointment.From1).ToList();
+        count = _acrcList.Count();
+        acrcList = getAR(0, pageSize);
+    }
+
+    void PageChanged(PagerEventArgs args)
+    {
+        acrcList = getAR(args.Skip, args.Top);
+    }
+
+    IEnumerable<AppointmentRecord> getAR(int skip, int take)
+    {
+        return _acrcList.Skip(skip).Take(take);
+    }
+
+    /*async void deleteOrder(AppointmentRecord ar)
+    {
+        bool f1, f2;
+        if (ar.Record != null)
+            f1 = await rcs.DeleteAsync(ar.Record.RecordId);
+        else
+            f1 = true;
+        f2 = await acs.DeleteAppointmentCurrentUser(ar.Appointment.AppointmentId);
+        if (f1 && f2)
+        {
+            _acrcList.Remove(ar);
+            acrcList = getAR(0, pageSize);
+        }
+        await InvokeAsync(StateHasChanged);
+    }*/
+
+    class AppointmentRecord
+    {
+        public AppointmentCurrent Appointment { get; set; }
+        public RecordCurrent Record { get; set; }
+    }
+}

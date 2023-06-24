@@ -1,0 +1,81 @@
+@page "/Spec/Areas"
+@using WebAppBlazor.Data;
+@using WebAppBlazor.Data.Models;
+@using WebAppBlazor.Services;
+@using Newtonsoft.Json;
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject IAreaService AreaService
+@inject ISpecialistService SpecService
+
+
+
+<div class="container-fluid">
+    <div class="row my-5">
+        <div class="col-lg-6 offset-lg-3">
+            <RadzenCard>
+                <RadzenTree AllowCheckBoxes="true" @bind-CheckedValues=@CheckedValues Style="width: 100%; height: 300px" Data=@areas>
+                    <RadzenTreeLevel TextProperty="AreaName" ChildrenProperty="Rooms" />
+                    <RadzenTreeLevel TextProperty="RoomNumber" HasChildren=@(room => false) />
+                </RadzenTree>
+            </RadzenCard>
+        </div>
+    </div>
+</div>
+
+@code {
+    string pagingSummaryFormat = "Displaying page {0} of {1} (total {2} records)";
+    int pageSize = 4;
+    int currentNum;
+    int count;
+    UserTable userFromJson;
+
+    IEnumerable<Area> areas;
+    IEnumerable<object> checkedValues;
+
+    IEnumerable<object> CheckedValues
+    {
+        get => checkedValues;
+        set
+        {
+            if (checkedValues.Count() == value.Count())
+                return;
+            checkedValues = value;
+            HashSet<Room> rooms = new HashSet<Room>();
+            foreach (object obj in checkedValues)
+            {
+                if (obj is Room room)
+                {
+                    rooms.Add((Room)obj);
+                }
+                if (obj is Area area)
+                {
+                    rooms.UnionWith(area.Rooms);    
+                }
+
+            }
+            if (userFromJson.Specialist.Rooms.Count != rooms.Count)
+            {
+                userFromJson.Specialist.Rooms = rooms;
+                SpecService.SpecialistPutAsync(userFromJson.UserUirId, userFromJson.Specialist);
+            }
+            
+
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        var userJson = await localStorage.GetItemAsync<string>("user");
+        userFromJson = JsonConvert.DeserializeObject<UserTable>(userJson);
+        areas = await AreaService.AreasAsync();
+        userFromJson.Specialist = await SpecService.SpecialistAsync(userFromJson.UserUirId);
+        checkedValues = userFromJson.Specialist.Rooms.Cast<object>();
+    }
+
+    class AppointmentRecord
+    {
+        public AppointmentCurrent Appointment { get; set; }
+        public RecordCurrent Record { get; set; }
+    }
+}

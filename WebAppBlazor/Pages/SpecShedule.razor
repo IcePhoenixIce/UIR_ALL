@@ -1,0 +1,125 @@
+﻿@page "/Spec/Shedule"
+@using WebAppBlazor.Data;
+@using WebAppBlazor.Data.Models;
+@using WebAppBlazor.Services;
+@using Newtonsoft.Json;
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+@inject ISpecialistService ss
+
+<div>
+	<AuthorizeView Roles="Specialist">
+		<div class="col-12 row" style="height:900px">
+			<RadzenScheduler @ref=@scheduler TItem="RecordShedule" Data=@data TItem="RecordShedule" StartProperty="From1" EndProperty="To1" TextProperty="info"
+							 SlotSelect=@OnSlotSelect AppointmentSelect=@OnAppointmentSelect AppointmentRender=@OnAppointmentRender Style="height:900px">
+				<RadzenWeekView />
+			</RadzenScheduler>
+		</div>
+	</AuthorizeView>
+</div>
+
+@code {
+	int userID;
+	ICollection<SheduleTable> sheduleList;
+	RadzenScheduler<RecordShedule> scheduler;
+	List<RecordShedule> data = new List<RecordShedule>();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await base.OnInitializedAsync();
+		var userJson = await localStorage.GetItemAsync<string>("user");
+		var userFromJson = JsonConvert.DeserializeObject<UserTable>(userJson);
+		if (userFromJson.Specialist == null)
+		{
+			NavigationManager.NavigateTo("");
+			return;
+		}
+		userID = userFromJson.UserUirId;
+		await LoadData(userID);
+	}
+
+	async Task<bool> LoadData(int id)
+	{
+		var userFromJson = await ss.SpecialistAsync(id);
+		data = new List<RecordShedule>();
+		DateTime now = DateTime.Now.Date;
+		sheduleList = userFromJson.SheduleTables;
+		foreach (SheduleTable sh in sheduleList)
+		{
+			int diff = (int)sh.WeekdayId - (int)now.DayOfWeek;
+			if (diff <= 0) diff += 7;
+			DateTime dateF = now.AddDays(diff).Add(sh.From1);
+			DateTime dateLS = now.AddDays(diff).Add(sh.LunchStart);
+			DateTime dateLE = now.AddDays(diff).Add(sh.LunchEnd);
+			DateTime dateT = now.AddDays(diff).Add(sh.To1);
+			data.Add(new RecordShedule
+				{
+					SpecID = userID,
+					From1 = dateF,
+					To1 = dateLS,
+					Price = (decimal)sh.Price,
+					info = $"Стоимость за 30 минут: {sh.Price}",
+					IsBooked = false,
+					sheduleTable = sh
+				});
+			data.Add(new RecordShedule
+				{
+					SpecID = userID,
+					From1 = dateLS,
+					To1 = dateLE,
+					Price = (decimal)sh.Price,
+					info = $"Обеденный перерыв",
+					IsBooked = true,
+					sheduleTable = sh
+				});
+			data.Add(new RecordShedule
+				{
+					SpecID = userID,
+					From1 = dateLE,
+					To1 = dateT,
+					Price = (decimal)sh.Price,
+					info = $"Стоимость за 30 минут: {sh.Price}",
+					IsBooked = false,
+					sheduleTable = sh
+				});
+		}
+		return true;
+	}
+
+	async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<RecordShedule> args)
+	{
+		await DialogService.OpenAsync<WebAppBlazor.Pages.EditShedulePage>("Редактировать день расписание", new Dictionary<string, object> {{ "Shedule", args.Data }} );
+		bool f = await LoadData(userID);
+		Thread.Sleep(500);
+		if (f) await scheduler.Reload();
+	}
+
+	async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
+	{
+		if (data.Where(rs => rs.sheduleTable.WeekdayId == args.Start.DayOfWeek).Any())
+		{
+			return;
+		}
+		RecordShedule shedule = await DialogService.OpenAsync <AddShedulePage>("Добавить день в расписание",
+					new Dictionary<string, object> { {"SpecId", userID }, { "Start", args.Start }, { "End", args.End } });
+
+		if (data != null)
+		{
+			bool f = await LoadData(userID);
+			Thread.Sleep(500);
+			if (f) await scheduler.Reload();
+		}
+	}
+
+	void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<RecordShedule> args)
+	{
+		// Never call StateHasChanged in AppointmentRender - would lead to infinite loop
+
+		if (args.Data.IsBooked)
+			args.Attributes["style"] = "background: grey";
+		else
+			args.Attributes["style"] = "background: green";
+	}
+
+}

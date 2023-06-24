@@ -62,8 +62,7 @@ namespace WebAppBlazor.Services
             requstMassage.Content = new StringContent(serializeAppointment);
             requstMassage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json-patch+json");
             var response = await _httpClient.SendAsync(requstMassage);
-            var responseStatusCode = response.StatusCode;
-            if (responseStatusCode == System.Net.HttpStatusCode.Created)
+            if (response.StatusCode == System.Net.HttpStatusCode.Created)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
                 var returned_user = JsonConvert.DeserializeObject<AppointmentCurrent>(responseBody);

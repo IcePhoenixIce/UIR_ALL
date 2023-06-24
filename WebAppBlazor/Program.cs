@@ -55,6 +55,11 @@ builder.Services.AddHttpClient<IRoomService, RoomService>(x =>
     x.BaseAddress = new Uri("https://localhost:7106/api/Rooms/");
     x.DefaultRequestHeaders.Add("User-Agent", "BlazorServer");
 });
+builder.Services.AddHttpClient<IScheduleService, ScheduleService>(x =>
+{
+    x.BaseAddress = new Uri("https://localhost:7057/api/SheduleTables/");
+    x.DefaultRequestHeaders.Add("User-Agent", "BlazorServer");
+});
 
 builder.Services.AddSingleton<HttpClient>();
 builder.Services.AddScoped<DialogService>();

@@ -1,4 +1,4 @@
-﻿@layout CentredCardLayout
+@layout CentredCardLayout
 @page "/Login"
 @using WebAppBlazor.Data;
 @using WebAppBlazor.Data.Models;
@@ -9,6 +9,7 @@
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject IPassesServiceA passesServiceA
 @inject IPassesServiceB passesServiceB
+@inject ISpecialistService ss
  
 
 			<EditForm Model="@user" OnValidSubmit="@ValidateUser">
@@ -66,13 +67,15 @@
 
 			if (returnedPassA.Token != null && returnedPassB.Token != null)
 			{
+				await localStorage.SetItemAsync("tokenA", returnedPassA.Token);
+				await localStorage.SetItemAsync("tokenB", returnedPassB.Token);
+				if (returnedPassA.UserUir.Specialist != null)
+					returnedPassA.UserUir.Specialist = await ss.SpecialistAsync(returnedPassA.UserUir.Specialist.SpecialistId);
 				((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(returnedPassA.UserUir);
 
 				NavigationManager.NavigateTo("/");
 
 				await localStorage.SetItemAsync("user", JsonConvert.SerializeObject(returnedPassA.UserUir));
-				await localStorage.SetItemAsync("tokenA", returnedPassA.Token);
-				await localStorage.SetItemAsync("tokenB", returnedPassB.Token);
 				return await Task.FromResult(true);
 			}
 			else

@@ -49,14 +49,38 @@ namespace UIR_Service_B.Controllers
 			return recordCurrent;
 		}
 
-		// POST: api/RecordCurrents
-		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-		[HttpPost("User")]
-		public async Task<ActionResult<RecordCurrent>> PostRecordCurrent(RecordCurrent recordCurrent, int specialistID, decimal price)
+        [HttpGet("Spec/{id}")]
+        public async Task<ActionResult<IEnumerable<RecordCurrent>>> GetRecordCurrentSpec(int id)
+        {
+            if (_context.RecordCurrents == null)
+            {
+                return NotFound();
+            }
+            var recordCurrent = await _context.RecordCurrents
+                .Include(rec => rec.InvitesCurrents)
+                    .ThenInclude(inv => inv.UserUir)
+                .Include(rec => rec.Room)
+                    .ThenInclude(rec => rec.Area)
+                .Where(rec => rec.InvitesCurrents.FirstOrDefault().UserUirId == id)
+                .ToListAsync();
+
+            if (recordCurrent == null)
+            {
+                return NotFound();
+            }
+
+            return recordCurrent;
+        }
+
+        // POST: api/RecordCurrents
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost("User")]
+		public async Task<ActionResult<RecordCurrent>> PostRecordCurrent(RecordCurrent recordCurrent)
 		{
-			if (_context.RecordCurrents == null)
-				return Problem("Entity set 'UirDbContext.RecordCurrents'  is null.");
-			if (recordCurrent.From1.TimeOfDay >= recordCurrent.To1.TimeOfDay)
+			int specialistID = recordCurrent.InvitesCurrents.FirstOrDefault().UserUirId;
+			decimal price = Convert.ToDecimal(recordCurrent.InvitesCurrents.FirstOrDefault().AdditionalInfo);
+
+            if (recordCurrent.From1.TimeOfDay >= recordCurrent.To1.TimeOfDay)
 				return BadRequest("Неккоректное время начала, окончания бронирования");
 			var roomView = await _context.Rooms
 				.Include(rec => rec.Area)

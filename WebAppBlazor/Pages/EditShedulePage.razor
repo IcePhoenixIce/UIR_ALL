@@ -1,0 +1,129 @@
+﻿@using WebAppBlazor.Data.Models;
+@using WebAppBlazor.Services;
+@inject DialogService DialogService
+@inject IScheduleService ss
+
+<div class="row" style="margin-bottom: 16px">
+    <div class="col-md-3">
+        <RadzenLabel Text="Начало" />
+    </div>
+    <div class="col">
+        <RadzenDatePicker @bind-Value="@model.From1" Name="Start" ShowTime="true" TimeOnly="true" ShowSeconds="false" MinutesStep="30" DateFormat="HH:mm" />
+    </div>
+</div>
+<div class="row" style="margin-bottom: 16px">
+    <div class="col-md-3">
+        <RadzenLabel Text="Конец" />
+    </div>
+    <div class="col">
+        <RadzenDatePicker Name="End" @bind-Value="@model.To1" ShowTime="true" TimeOnly="true" ShowSeconds="false" MinutesStep="30" DateFormat="HH:mm" />
+    </div>
+</div>
+<div class="row" style="margin-bottom: 16px">
+    <div class="col-md-3">
+        <RadzenLabel Text="Начало обеденного перерыва" />
+    </div>
+    <div class="col">
+        <RadzenDatePicker @bind-Value="@model.LunchStart" Name="LunchStart" ShowTime="true" TimeOnly="true" ShowSeconds="false" MinutesStep="30" DateFormat="HH:mm" />
+    </div>
+</div>
+<div class="row" style="margin-bottom: 16px">
+    <div class="col-md-3">
+        <RadzenLabel Text="Конец обеденного перерыва" />
+    </div>
+    <div class="col">
+        <RadzenDatePicker @bind-Value="@model.LunchEnd" Name="LunchEnd" ShowTime="true" TimeOnly="true" ShowSeconds="false" MinutesStep="30" DateFormat="HH:mm" />
+    </div>
+</div>
+<div class="row" style="margin-bottom: 16px">
+    <div class="col-md-3">
+        <RadzenLabel Text="Цена" />
+    </div>
+    <div class="col">
+        <RadzenNumeric @bind-Value=@model.sheduleTable.Price Min=0/>
+    </div>
+</div>
+<div class="row">
+    <ValidationMess IsVisible=@IsVisible result=1 renderFragment=@MessageString />
+        <br/>
+</div>
+
+<div class="row">
+    <div class="col-md-3"></div>
+
+</div>
+
+<div class="row">
+    <div class="col-md-3"></div>
+    <div class="col-md-3">
+        <RadzenButton Click=@(args => OnSubmit()) Text="Сохранить!" />
+    </div>
+    <div class="col-md-3">
+        <RadzenButton Click=@(args => OnDelete()) Text="Удалить!" ButtonStyle="ButtonStyle.Danger" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public RecordShedule shedule { get; set; }
+
+    RecordShedule model;
+
+    bool IsVisible = false;
+    string MessageString;
+
+    protected override void OnInitialized()
+    {
+        DateTime date = shedule.To1.Date;
+        shedule.From1 = date + shedule.sheduleTable.From1;
+        shedule.LunchStart = date + shedule.sheduleTable.LunchStart;
+        shedule.LunchEnd = date + shedule.sheduleTable.LunchEnd;
+        shedule.To1 = date + shedule.sheduleTable.To1;
+        model = shedule;
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+    }
+
+    async Task<bool> OnSubmit()
+    {
+        if ((model.From1.Second != 0) || (model.LunchStart.Second != 0) || (model.LunchEnd.Second != 0) || (model.To1.Second != 0))
+        {
+            MessageString = "Не надо указывать секунды!";
+            IsVisible = true;
+            return false;
+        }
+        if ((model.From1.Minute != 0 && model.From1.Minute != 30) || (model.To1.Minute != 0 && model.To1.Minute != 30) || (model.LunchEnd.Minute != 0 && model.LunchEnd.Minute != 30) || (model.LunchStart.Minute != 0 && model.LunchStart.Minute != 30))
+        {
+            MessageString = "Минуты должны быть либо 00, либо 30!";
+            IsVisible = true;
+            return false;
+        }
+        if (model.From1 >= model.LunchStart || model.LunchStart >= model.LunchEnd || model.LunchEnd >= model.To1)
+        {
+            MessageString = "Неправильный порядок по времени!";
+            IsVisible = true;
+            return false;
+        }
+        model.sheduleTable.From1 = model.From1.TimeOfDay;
+        model.sheduleTable.LunchStart = model.LunchStart.TimeOfDay;
+        model.sheduleTable.LunchEnd = model.LunchEnd.TimeOfDay;
+        model.sheduleTable.To1 = model.To1.TimeOfDay;
+        ss.ShedulePutAsync(model.sheduleTable.SpecialistId, model.sheduleTable);
+        DialogService.Close();
+        return true;
+    }
+
+    async Task<bool> OnDelete()
+    {
+        if (await ss.SheduleDeleteAsync(shedule.sheduleTable.SpecialistId, (int)shedule.sheduleTable.WeekdayId))
+        {
+            DialogService.Close();
+            return true;
+        }
+        return false;
+    }
+}

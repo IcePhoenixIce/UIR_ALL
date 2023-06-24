@@ -7,7 +7,7 @@ namespace WebAppBlazor.Services
 	{
         public Task<IEnumerable<SpecialistName>?> SpecialistsAsync();
         public Task<SpecialistName?> SpecialistAsync(int id);
-
+        public Task<bool> SpecialistPutAsync(int id, Specialist spec);
         public Task<ActionResult<(Specialist, IDictionary<DateTime, IEnumerable<RecordService>>)>> GetAppointmentCurrentSpec(int id);
     }
 }

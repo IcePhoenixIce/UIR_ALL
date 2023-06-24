@@ -180,8 +180,8 @@
 					});
 			data.AddRange(result);
 		}
-		await InvokeAsync(StateHasChanged);
 		await scheduler.Reload();
+		//await InvokeAsync(StateHasChanged);
 	}
 
 	async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<RecordService> args)
@@ -197,7 +197,7 @@
 				{ "Room", room },
 				{ "Area", area },
 				{ "simple", simplifiedConsultation}
-				});
+			});
 
 		await scheduler.Reload();
 	}

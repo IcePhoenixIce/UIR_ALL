@@ -58,7 +58,7 @@
     <div class="row">
         <div class="col-md-3"></div>
         <div class="col">
-            <RadzenButton Click=@(args => OnSubmit()) Text="Сохранить!" />
+            <RadzenButton Click=@(args => OnSubmit()) Text="Записаться!" />
         </div>
     </div>
 
@@ -145,16 +145,24 @@
                 RoomId = room.RoomId,
                 From1 = Appointment.From1,
                 To1 = Appointment.To1,
-                InvitesCurrents = new List<InvitesCurrent>()
+                InvitesCurrents = new List<InvitesCurrent>
+                {
+                    new InvitesCurrent
+                    {   
+                        RecordId = 0,
+                        UserUirId = specialist.SpecialistId,
+                        AdditionalInfo = Appointment.PriceRoom.ToString()
+                    }
+                }
             };
-        record = await rcs.PostRecordAsync(record, specialist.SpecialistId, Appointment.PriceRoom);
+        record = await rcs.PostRecordAsync(record);
 
         if (record == null)
         {
             MessageString = "Запись не выполнена, попробуйте записаться еще раз!";
             IsVisible = true;
             await InvokeAsync(StateHasChanged);
-            Thread.Sleep(5000);
+            //Thread.Sleep(5000);
             DialogService.Close();
             NavigationManager.NavigateTo("/Zapisi/Add");
             await acs.DeleteAppointmentCurrentUser(appointment.AppointmentId);

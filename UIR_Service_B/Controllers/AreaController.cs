@@ -32,7 +32,7 @@ namespace UIR_Service_B.Controllers
                 return NotFound();
             }
 
-            return await _context.Areas.ToListAsync();
+            return await _context.Areas.Include(a => a.Rooms).ToListAsync();
         }
 
         // GET: api/Areas/5

@@ -10,7 +10,7 @@ using UIR_WebAPI_1.Models;
 
 namespace UIR_WebAPI_1.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class SpecialistsController : ControllerBase
@@ -43,8 +43,8 @@ namespace UIR_WebAPI_1.Controllers
           }
             var specialist = await _context.Specialists
                 .Include(user => user.SpecialistNavigation)
-                /*.Include(specialist => specialist.SheduleTables)
-                .Include(specialist => specialist.AppointmentCurrents)*/
+                .Include(specialist => specialist.SheduleTables)
+                //.Include(specialist => specialist.AppointmentCurrents)
                 .Include(spec => spec.Rooms)
                 .Where(specialist => specialist.SpecialistId == id)
                 .FirstOrDefaultAsync();

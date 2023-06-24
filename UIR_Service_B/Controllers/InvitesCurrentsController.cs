@@ -41,6 +41,24 @@ namespace UIR_Service_B.Controllers
             return invitesCurrent;
         }
 
+		// GET: api/InvitesCurrents/Specialist/{id}
+		[HttpGet("Specialist/{id}")]
+        public async Task<ActionResult<IEnumerable<InvitesCurrent>>> GetInvitesCurrentSpec(int id)
+        {
+            if (_context.InvitesCurrents == null)
+            {
+                return NotFound();
+            }
+            var invitesCurrent = await _context.InvitesCurrents.Where(inv => inv.UserUirId == id).ToListAsync();
+
+            if (invitesCurrent == null)
+            {
+                return NotFound();
+            }
+
+            return invitesCurrent;
+        }
+
         // POST: api/InvitesCurrents
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]

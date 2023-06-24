@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Security.Principal;
 using System.Xml.Linq;
 using WebAppBlazor.Data.Models;
+using WebAppBlazor.Services;
 
 namespace WebAppBlazor.Data
 {
@@ -27,11 +28,16 @@ namespace WebAppBlazor.Data
 				
 				if (userFromStr != null)
 				{
-					identity = new ClaimsIdentity(
-						new[]
-						{
-						new Claim(ClaimTypes.Name, userFromStr.FirstName),
-						}, "apiauth_type");
+					string role = "Client";
+					if (userFromStr.Specialist != null)
+						role = "Specialist"; 
+					var claims = new List<Claim>
+					{
+						new Claim(ClaimTypes.NameIdentifier, userFromStr.UserUirId.ToString()),
+						new Claim(ClaimTypes.Name, userFromStr.LastName+" "+userFromStr.FirstName+" "+userFromStr.MiddleName),
+						new Claim(ClaimTypes.Role, role)
+					};
+					identity = new ClaimsIdentity(claims,"apiauth_type");
 				}
 				else
 					identity = new ClaimsIdentity();
@@ -46,7 +52,9 @@ namespace WebAppBlazor.Data
 		public void MarkUserAsAuthenticated(UserTable userTable) 
 		{
 			string role = "Client";
-			if (userTable.Specialist != null) role = "Specialist";
+			if (userTable.Specialist != null) 
+                role = "Specialist";
+				
             var claims = new List<Claim>
 				{
 					new Claim(ClaimTypes.NameIdentifier, userTable.UserUirId.ToString()),
