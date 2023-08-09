@@ -1,10 +1,10 @@
 ﻿using WebAppBlazor.Data.Models;
 
-namespace WebAppBlazor.Services
+namespace WebAppBlazor.Services.ServiceB
 {
     public interface IRoomService
-	{
+    {
         public Task<ICollection<Room>?> RoomsAsync(int areaId);
-        public Task<(Room, IDictionary<DateTime, IEnumerable<RecordService>>)?> RoomAsync(int id);
+        public Task<IEnumerable<RecordService>?> RoomAsync(int id);
     }
 }

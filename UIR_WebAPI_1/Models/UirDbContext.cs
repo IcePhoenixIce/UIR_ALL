@@ -56,6 +56,12 @@ public partial class UirDbContext : DbContext
                 .HasMaxLength(200)
                 .IsUnicode(false)
                 .HasColumnName("Area_Name");
+            entity.Property(e => e.Servis)
+                .IsUnicode(true)
+                .HasColumnName("Servis");
+            entity.Property(e => e.AdditionalInfo)
+                .IsUnicode(true)
+                .HasColumnName("AdditionalInfo");
             entity.Property(e => e.From1).HasPrecision(0);
             entity.Property(e => e.To1).HasPrecision(0);
         });

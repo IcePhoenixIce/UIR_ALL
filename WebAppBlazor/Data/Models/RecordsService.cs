@@ -9,6 +9,8 @@
         public decimal PriceRoom { get; set; } = 0;
         public bool IsBooked { get; set; } = false;
 
+        public bool IsChoosen { get; set; } = false;
+
         public string PriceStr 
         { 
             get { return "Цена: "+Price.ToString(); } 

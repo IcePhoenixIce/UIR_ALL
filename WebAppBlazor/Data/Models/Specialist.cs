@@ -26,32 +26,8 @@ public partial class Specialist
     public virtual PassGarmony? PassGarmonyNavigation { get; set; }
 
     public virtual ICollection<Room>? Rooms { get; set; }
-}
 
-public partial class SpecialistName : Specialist
-{
-    public string LastName { get; set; } = null!;
-    public string FirstName { get; set; } = null!;
-    public string MiddleName { get; set; } = null!;
-
-    public SpecialistName(Specialist s)
-    {
-        this.SpecialistId = s.SpecialistId;
-        this.Specialization = s.Specialization;
-        this.Degree = s.Degree;
-        this.Experience = s.Experience;
-        this.AdditionalInfo = s.AdditionalInfo;
-        this.AppointmentCurrents = s.AppointmentCurrents;
-        this.AppointmentEndeds = s.AppointmentEndeds;
-        this.SheduleTables = s.SheduleTables;
-        this.SpecialistNavigation = s.SpecialistNavigation;
-        this.PassGarmonyNavigation = s.PassGarmonyNavigation;
-        this.Rooms = s.Rooms;
-        if (s.SpecialistNavigation != null)
-        {
-            this.LastName = s.SpecialistNavigation.LastName;
-            this.FirstName = s.SpecialistNavigation.FirstName;
-            this.MiddleName = s.SpecialistNavigation.MiddleName;
-        }
-    }
+    public string FirstName { get { return SpecialistNavigation.FirstName; } }
+    public string LastName { get { return SpecialistNavigation.LastName; } }
+    public string MiddleName { get { return SpecialistNavigation.MiddleName; } }
 }

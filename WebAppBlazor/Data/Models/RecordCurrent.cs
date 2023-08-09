@@ -15,7 +15,9 @@ public partial class RecordCurrent
 
     public DateTime To1 { get; set; }
 
-    public virtual ICollection<InvitesCurrent>? InvitesCurrents { get; set; }
+	public string? ServiceRecord { get; set; }
+
+	public virtual ICollection<InvitesCurrent>? InvitesCurrents { get; set; }
 
     public virtual Room? Room { get; set; }
 

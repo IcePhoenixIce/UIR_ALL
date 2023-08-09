@@ -15,7 +15,9 @@ public partial class RecordEnded
 
     public DateTime To1 { get; set; }
 
-    public int? RatingId { get; set; }
+	public string? ServiceRecord { get; set; }
+
+	public int? RatingId { get; set; }
 
     public virtual ICollection<InvitesEnded>? InvitesEndeds { get; set; }
 

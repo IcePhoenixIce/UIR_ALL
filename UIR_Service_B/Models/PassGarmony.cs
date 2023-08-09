@@ -11,5 +11,7 @@ public partial class PassGarmony
 
     public string Password { get; set; } = null!;
 
+    public string Servis { get; set; } = null!;
+
     public virtual UserTable? UserUir { get; set; }
 }

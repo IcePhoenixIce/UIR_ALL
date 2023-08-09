@@ -3,6 +3,8 @@
 @using WebAppBlazor.Data.Models;
 @using WebAppBlazor.Services;
 @using Newtonsoft.Json;
+@using WebAppBlazor.Services.ServiceA;
+@using WebAppBlazor.Services.ServiceB;
 @inject ISpecialistService ss
 @inject IAreaService areas
 @inject IRoomService rs
@@ -44,7 +46,7 @@
 	<div class="col-12 row">
 		<RadzenCard Visible=@(IsVisibleArea && !simplifiedConsultation)>
 			<RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Выберите здание</RadzenText>
-			<RadzenDropDownDataGrid TValue="string" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" AllowClear="true"
+			<RadzenDropDownDataGrid @ref=@areaDropDown TValue="string" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" AllowClear="true"
 									Data=@(areaList) Style="width: 100%" AllowColumnResize="true"
 									TextProperty="AreaName" ValueProperty="AreaId" AllowFilteringByAllStringColumns="true"
 									Change=@(args => OnChangeArea(args, "DropDownDataGrid with filtering by all string columns"))>
@@ -58,13 +60,12 @@
 	<div class="col-12 row">
 		<RadzenCard Visible=@(IsVisibleRoom && !simplifiedConsultation)>
 			<RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Выберите комнату</RadzenText>
-			<RadzenDropDownDataGrid TValue="string" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" AllowClear="true"
-									Data=@(roomList) Style="width: 100%" AllowColumnResize="true"
+			<RadzenDropDownDataGrid @ref=@roomDropDown TValue="string" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowFiltering="true" AllowClear="true"
+									Data=@(roomList) Style="width: 100%" AllowColumnResize="true" 
 									TextProperty="RoomNumber" ValueProperty="RoomId" AllowFilteringByAllStringColumns="true"
 									Change=@(args => OnChangeRoom(args, "DropDownDataGrid with filtering by all string columns"))>
 				<Columns>
 					<RadzenDropDownDataGridColumn Property="RoomNumber" Title="Название" Width="50px" />
-					<RadzenDropDownDataGridColumn Property="AdditionalInformation" Title="Адрес" Width="200px" />
 				</Columns>
 			</RadzenDropDownDataGrid>
 		</RadzenCard>
@@ -72,16 +73,17 @@
 	<div class="col-12 row" style="display:@IsVisibleRecords; height:900px">
 			<RadzenScheduler @ref=@scheduler TItem="RecordService" Data=@data TItem="RecordService" StartProperty="From1" EndProperty="To1" TextProperty="PriceStr" 
 				AppointmentSelect=@OnAppointmentSelect AppointmentRender=@OnAppointmentRender Style="height:900px">
+			<RadzenButton Text="Подтвердить запись" style="display: flex; justify-content: center; align-items: center;" ButtonStyle="ButtonStyle.Success" Click=@OnChooseConfirm />
 			<RadzenWeekView />
 		</RadzenScheduler>
 	</div>
 </div>
 
 @code {
-	IEnumerable<SpecialistName> specList;
+	IEnumerable<Specialist> specList;
 	IEnumerable<Area> areaList;
 	List<Room> roomList;
-	SpecialistName specialist;
+	Specialist specialist;
 	Room room;
 	Area area;
 	int userId;
@@ -90,11 +92,15 @@
 	bool simplifiedConsultation = false;
 	string IsVisibleRecords = "none";
 
-	RadzenScheduler<RecordService> scheduler;
+	RadzenScheduler<RecordService>? scheduler;
 
+	RadzenDropDownDataGrid<string>? roomDropDown;
+	RadzenDropDownDataGrid<string>? areaDropDown;
 
 
 	List<RecordService> data = new List<RecordService>();
+
+	List<RecordService> selectedRecords = new List<RecordService>();
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -112,7 +118,7 @@
 
 		if (IsVisibleArea && simplifiedConsultation)
 		{
-			data = (await ss.GetAppointmentCurrentSpec(specialist.SpecialistId)).Value.Item2.Values.SelectMany(x => x).ToList();
+			data = (await ss.GetAppointmentCurrentSpec(specialist.SpecialistId)).ToList();
 			IsVisibleRecords = "flex";
 		}
 		else
@@ -128,7 +134,7 @@
 		IsVisibleRoom = false;
 		if (simplifiedConsultation)
 		{
-			data = (await ss.GetAppointmentCurrentSpec(specialist.SpecialistId)).Value.Item2.Values.SelectMany(x => x).ToList();
+			data = (await ss.GetAppointmentCurrentSpec(specialist.SpecialistId)).ToList();
 			IsVisibleRecords = "flex";
 		}
 		else
@@ -142,7 +148,7 @@
 		roomList = (await rs.RoomsAsync((int)value)).ToList();
 		var specroomList = specialist.Rooms.ToList();
 		roomList.RemoveAll(item => specroomList.Contains(item));
-		area = areaList.Where(ar => ar.AreaId == (int)value).FirstOrDefault();
+		area = (Area)areaDropDown.SelectedItem;
 		if (roomList.Count() > 0)
 		{
 			IsVisibleRoom = true;
@@ -160,13 +166,10 @@
 		var str = value is IEnumerable<object> ? string.Join(", ", (IEnumerable<object>)value) : value;
 		IsVisibleRecords = "flex";
 		var roomShedule = await rs.RoomAsync((int)value);
-		room = roomShedule.Value.Item1;
+		room = (Room)roomDropDown.SelectedItem;
 		var specShedule = await ss.GetAppointmentCurrentSpec(specialist.SpecialistId);
-		data.Clear();
-		foreach (KeyValuePair<DateTime, IEnumerable<RecordService>> room_buff in roomShedule.Value.Item2)
-		{
-			var specDayShedule = specShedule.Value.Item2[room_buff.Key];
-			var result = room_buff.Value.Join(specDayShedule,
+		data.Clear(); 
+		data = roomShedule.Join(specShedule,
 				r1 => new { r1.From1, r1.To1 }, // ключ для первой коллекции
 				r2 => new { r2.From1, r2.To1 }, // ключ для второй коллекции
 				(r1, r2) => new RecordService // результат
@@ -177,27 +180,67 @@
 						Price = r1.Price + r2.Price,
 						PriceRoom = r1.Price,
 						IsBooked = r1.IsBooked || r2.IsBooked
-					});
-			data.AddRange(result);
-		}
-		await scheduler.Reload();
-		//await InvokeAsync(StateHasChanged);
+					}).ToList();
+		//await scheduler.Reload();
+		await InvokeAsync(StateHasChanged);
 	}
 
 	async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<RecordService> args)
 	{
 		if (args.Data.IsBooked)
 			return;
-		await DialogService.OpenAsync<EditAppointmentPage>("Записаться", 
-		new Dictionary<string, object> 
-			{ 
-				{ "Appointment", args.Data }, 
+		bool left = false;
+		bool right = false;
+		if (selectedRecords.Count == 0)
+		{
+			args.Data.IsChoosen = true;
+			selectedRecords.Add(args.Data);
+			return;
+		}
+		foreach (var rec in selectedRecords)
+		{
+			if (args.Data.From1 == rec.To1)
+			{
+				right = true;
+			}
+			else if (args.Data.To1 == rec.From1)
+			{
+				left = true;
+			}
+		}
+		if (left && right)
+		{
+			return;	
+		}
+		if (args.Data.IsChoosen)
+		{
+			args.Data.IsChoosen = false;
+			selectedRecords.Remove(args.Data);
+		}
+		else if (left || right)
+		{
+			args.Data.IsChoosen = true;
+			selectedRecords.Add(args.Data);
+		}
+
+
+		/**/
+	}
+
+	async void OnChooseConfirm()
+	{
+		if (selectedRecords.Count < 2)
+			return;
+		await DialogService.OpenAsync<EditAppointmentPage>("Записаться",
+		new Dictionary<string, object>
+				{
+				{ "Appointment",  selectedRecords},
 				{ "specialist", specialist },
 				{ "UserId",  userId},
 				{ "Room", room },
 				{ "Area", area },
 				{ "simple", simplifiedConsultation}
-			});
+				});
 
 		await scheduler.Reload();
 	}
@@ -207,8 +250,8 @@
 		// Never call StateHasChanged in AppointmentRender - would lead to infinite loop
 
 		if (args.Data.IsBooked)
-		{
 			args.Attributes["style"] = "background: grey";
-		}
+		else if (args.Data.IsChoosen)
+			args.Attributes["style"] = "background: green";
 	}
 }

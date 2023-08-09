@@ -9,7 +9,7 @@ public partial class Room
 
     public string? AdditionalInformation { get; set; }
 
-    public int? AreaId { get; set; }
+    public int AreaId { get; set; }
 
     public string RoomNumber { get; set; } = null!;
 

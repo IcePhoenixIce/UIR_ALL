@@ -1,9 +1,11 @@
 ﻿@using WebAppBlazor.Data.Models;
-@using WebAppBlazor.Services;
+@using WebAppBlazor.Services.ServiceB;
+@using WebAppBlazor.Services.ServiceA;
 @inject DialogService DialogService
 @inject IRecordsCurrentService rcs
 @inject IAppointmentCurrentService acs
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JS
 
 <RadzenTemplateForm TItem="RecordService" Submit=@OnSubmit>
     <div class="row" style="margin-bottom: 16px">
@@ -50,7 +52,7 @@
             <RadzenLabel Text="Цена: " />
         </div>
         <div class="col">
-            <RadzenLabel Text="@Appointment.PriceStr" />
+            <RadzenLabel Text="@sumRecord.PriceStr" />
         </div>
     </div>
 
@@ -61,14 +63,15 @@
             <RadzenButton Click=@(args => OnSubmit()) Text="Записаться!" />
         </div>
     </div>
-
 </RadzenTemplateForm>
 @code {
     [Parameter]
-    public RecordService Appointment { get; set; }
+    public List<RecordService> Appointment { get; set; }
+
+    RecordService sumRecord;
 
     [Parameter]
-    public SpecialistName specialist { get; set; }
+    public Specialist specialist { get; set; }
 
     public string specialist_str { get; set; }
 
@@ -88,19 +91,28 @@
 
     public string adress { get; set; }
 
-
-    bool IsVisible = false;
-
-    string MessageString = "Время записи не может выходить за первоначальные границы!";
+    string MessageString = "";
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        specialist_str = specialist.FirstName + " " + specialist.LastName + " " + specialist.MiddleName;
+        specialist_str = specialist.LastName + " " + specialist.FirstName + " " + specialist.MiddleName;
         if(!simple)
         {
             room_str = room.RoomNumber;
             adress = area.AreaLocation;
+        }
+
+        sumRecord = new RecordService() { From1 = Appointment[0].From1, To1 = Appointment[0].To1, Price = 0, PriceRoom = 0 };
+
+        foreach (RecordService rec in Appointment)
+        {
+            if (rec.From1 < sumRecord.From1)
+                sumRecord.From1 = rec.From1;
+            else
+                sumRecord.To1 = rec.To1;
+            sumRecord.Price += rec.Price;
+            sumRecord.PriceRoom += rec.PriceRoom;
         }
     }
 
@@ -111,12 +123,12 @@
 
     async Task<bool> OnSubmit()
     {
-        var appointment = new AppointmentCurrent 
-            { 
+        var appointment = new AppointmentCurrent
+            {
                 UserUirId = UserId,
                 SpecialistId = specialist.SpecialistId,
-                From1 = Appointment.From1,
-                To1 = Appointment.To1
+                From1 = sumRecord.From1,
+                To1 = sumRecord.To1
             };
 
         appointment = await acs.PostAppointmentAsync(appointment);
@@ -124,11 +136,10 @@
         if (appointment == null)
         {
             MessageString = "Запись не выполнена, попробуйте записаться еще раз!";
-            IsVisible = true;
+            await JS.InvokeVoidAsync("window.myFunctions.showAlert", MessageString);
             await InvokeAsync(StateHasChanged);
-            Thread.Sleep(5000);
             DialogService.Close();
-            NavigationManager.NavigateTo("/Zapisi/Add");               
+            NavigationManager.NavigateTo("/Zapisi/Add");
             return await Task.FromResult(false);
         }
 
@@ -138,38 +149,39 @@
             NavigationManager.NavigateTo("/User/Appointmets");
             return await Task.FromResult(true);
         }
-
-        var record = new RecordCurrent
-            {
-                UserUirId = UserId,
-                RoomId = room.RoomId,
-                From1 = Appointment.From1,
-                To1 = Appointment.To1,
-                InvitesCurrents = new List<InvitesCurrent>
+        try
+        {
+            var record = new RecordCurrent
+                {
+                    UserUirId = UserId,
+                    RoomId = room.RoomId,
+                    Room = room,
+                    From1 = sumRecord.From1,
+                    To1 = sumRecord.To1,
+                    InvitesCurrents = new List<InvitesCurrent>
                 {
                     new InvitesCurrent
-                    {   
+                    {
                         RecordId = 0,
                         UserUirId = specialist.SpecialistId,
-                        AdditionalInfo = Appointment.PriceRoom.ToString()
+                        AdditionalInfo = sumRecord.PriceRoom.ToString()
                     }
                 }
-            };
-        record = await rcs.PostRecordAsync(record);
-
-        if (record == null)
+                };
+            await rcs.PostRecordAsync(record);
+            DialogService.Close();
+            NavigationManager.NavigateTo("/User/Appointmets");
+            return await Task.FromResult(true);
+        }
+        catch (Exception ex)
         {
             MessageString = "Запись не выполнена, попробуйте записаться еще раз!";
-            IsVisible = true;
+            await JS.InvokeVoidAsync("window.myFunctions.showAlert", MessageString);
             await InvokeAsync(StateHasChanged);
-            //Thread.Sleep(5000);
             DialogService.Close();
             NavigationManager.NavigateTo("/Zapisi/Add");
             await acs.DeleteAppointmentCurrentUser(appointment.AppointmentId);
             return await Task.FromResult(false);
         }
-        DialogService.Close();
-        NavigationManager.NavigateTo("/User/Appointmets");
-        return await Task.FromResult(true);
     }
 }

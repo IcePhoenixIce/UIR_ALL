@@ -15,5 +15,9 @@ public partial class Area
 
     public TimeSpan To1 { get; set; }
 
+    public string Servis { get; set; }
+
+    public string? AdditionalInfo { get; set; }
+
     public virtual ICollection<Room> Rooms { get; } = new List<Room>();
 }

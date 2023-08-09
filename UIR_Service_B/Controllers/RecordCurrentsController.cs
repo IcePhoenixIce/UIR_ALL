@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -7,7 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using UIR_Service_B.Models;
+using UIR_Service_B.ServiceBooking;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using static UIR_Service_B.Models.booking;
 
@@ -19,6 +22,7 @@ namespace UIR_Service_B.Controllers
 	public class RecordCurrentsController : ControllerBase
 	{
 		private readonly UirDbContext _context;
+		static readonly IFormatProvider _ifp = CultureInfo.InvariantCulture;
 
 		public RecordCurrentsController(UirDbContext context)
 		{
@@ -75,66 +79,70 @@ namespace UIR_Service_B.Controllers
         // POST: api/RecordCurrents
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost("User")]
-		public async Task<ActionResult<RecordCurrent>> PostRecordCurrent(RecordCurrent recordCurrent)
+		public async Task<IActionResult> PostRecordCurrent(RecordCurrent recordCurrent)
 		{
 			int specialistID = recordCurrent.InvitesCurrents.FirstOrDefault().UserUirId;
 			decimal price = Convert.ToDecimal(recordCurrent.InvitesCurrents.FirstOrDefault().AdditionalInfo);
 
             if (recordCurrent.From1.TimeOfDay >= recordCurrent.To1.TimeOfDay)
 				return BadRequest("Неккоректное время начала, окончания бронирования");
-			var roomView = await _context.Rooms
-				.Include(rec => rec.Area)
-				.Where(rec => rec.RoomId == recordCurrent.RoomId).FirstOrDefaultAsync();
-			if (!(roomView.Area.From1 <= recordCurrent.From1.TimeOfDay && roomView.Area.To1 >= recordCurrent.To1.TimeOfDay))
+			if (!(recordCurrent.Room.Area.From1 <= recordCurrent.From1.TimeOfDay && recordCurrent.Room.Area.To1 >= recordCurrent.To1.TimeOfDay))
 				return BadRequest("В данное время помещение будет закрыто");
-            var passGarmony = await _context.PassesGarmony.FindAsync(specialistID);
+            var passGarmony = await _context.PassesGarmony.Where(p => p.UserUirId == specialistID && p.Servis == recordCurrent.Room.Area.Servis).FirstAsync();
             if (passGarmony == null)
-                return NotFound("Error in log in");
-
-            Dictionary<string, string> data = new Dictionary<string, string>();
-            data["email"] = passGarmony.Login;
-            data["pass"] = passGarmony.Password;
-            data["action"] = "login";
-			JsonElement json=await fetch(data);
-			string token = json.GetString();
-			data.Clear();
-
-			//Проверка баланса
-            data["token"] = token; 
-            data["action"] = "balance";
-            json = await fetch(data);
-			decimal balance = decimal.Parse(json.GetProperty("balance").GetString());
-			decimal sale = decimal.Parse(json.GetProperty("sale").GetString());
-			data.Clear();
-
-			if (balance < price * (1 - sale / 100))
-				return Problem("На аккаунте недостаточно средств. Попробуйте чуть позже!");
-
-            //Получение данных о пользователе.
-            data["token"] = token;
-            data["action"] = "me";
-            json = await fetch(data);
-            int userID = json.GetProperty("id").GetInt32();
-            data.Clear();
-
-            //Бронирование
-            data["date"] = recordCurrent.From1.ToShortDateString();
-			data["hour"] = recordCurrent.From1.Hour.ToString();
-			data["minute"] = recordCurrent.From1.Minute == 0 ? "1/2" : "2/2";
-			data["cabinet"] = recordCurrent.RoomId.ToString();
-			data["user_id"] = userID.ToString();
-			data["token"] = token;
-			data["action"] = "lock";
-            json = await fetch(data);
-
-			//Добавление в таблицу записи о брони
-			int id = json.GetProperty("id").GetInt32();
-			recordCurrent.RecordId = id;
-			recordCurrent.InvitesCurrents = new List<InvitesCurrent>() { new InvitesCurrent { RecordId = id, UserUirId = specialistID } };
-            _context.RecordCurrents.Add(recordCurrent);
-            await _context.SaveChangesAsync();
-			return recordCurrent;
-
+                return NotFound("Ошибка авторизации");
+			try
+			{
+				switch (recordCurrent.Room.Area.Servis)
+				{
+					case "ASH":
+						{
+							string token = await ASHRequests.ASHToken(passGarmony);
+							var (balance, sale) = await ASHRequests.ASHBalance(token);
+							if (balance < price * (1 - sale / 100))
+								return Problem("На аккаунте недостаточно средств. Попробуйте чуть позже!");
+							string userID = await ASHRequests.ASHMe(token);
+							DateTime from = recordCurrent.From1;
+							DateTime to = from.AddMinutes(30);
+							for (; to < recordCurrent.To1; to = to.AddMinutes(30))
+							{
+								string id = await ASHRequests.ASHLock(token, userID, recordCurrent, from);
+								recordCurrent.ServiceRecord = id;
+								recordCurrent.InvitesCurrents = new List<InvitesCurrent>() { new InvitesCurrent { UserUirId = specialistID } };
+								recordCurrent.Room = null;
+								_context.RecordCurrents.Add(recordCurrent);
+								await _context.SaveChangesAsync();
+							}
+						}
+						break;
+					case "SoulHelp":
+						{
+							JObject response = await SoulHelp.SoulHelp_RequestApp();
+							string appId = response.Value<string>("id");
+							string appSecret = response.Value<string>("appSecret");
+							response = await SoulHelp.SoulHelpLogin(appId, appSecret, passGarmony);
+							string token = response["accessToken"].ToString();
+							decimal balance = Convert.ToDecimal(response["settings"]["balance"], _ifp);
+							if(balance < price)
+								return Problem("На аккаунте недостаточно средств. Попробуйте чуть позже!");
+							string id = await SoulHelp.SoulHelpBooking(appId, appSecret, token, recordCurrent);
+							
+							recordCurrent.ServiceRecord = id;
+							recordCurrent.InvitesCurrents = new List<InvitesCurrent>() { new InvitesCurrent { UserUirId = specialistID } };
+							recordCurrent.Room = null;
+							_context.RecordCurrents.Add(recordCurrent);
+							await _context.SaveChangesAsync();
+						}
+						break;
+					default:
+						return BadRequest("Неизвестный сервис");
+				}
+			}
+			catch (Exception ex) 
+			{
+				return BadRequest($"При попытке записи произошла ошибка: {ex.Message}");
+			}
+			return Ok();
         }
 
 		//Удаление брони
@@ -146,46 +154,61 @@ namespace UIR_Service_B.Controllers
 			{
 				return NotFound();
 			}
-			var recordCurrent = await _context.RecordCurrents.Include(rec => rec.InvitesCurrents).Where(rec => rec.RecordId == id).FirstOrDefaultAsync(); ;
+			var recordCurrent = await _context.RecordCurrents.Include(rec => rec.InvitesCurrents).Include(rec => rec.Room).ThenInclude(r => r.Area).Where(rec => rec.RecordId == id).FirstOrDefaultAsync();
 			if (recordCurrent == null)
 			{
 				return NotFound();
 			}
-
-            //Получение токена
-            var passGarmony = await _context.PassesGarmony.FindAsync(recordCurrent.InvitesCurrents.First().UserUirId);
+            var passGarmony = await _context.PassesGarmony.Where(p => (int)p.UserUirId == recordCurrent.InvitesCurrents.First().UserUirId && p.Servis == recordCurrent.Room.Area.Servis).FirstAsync();
             if (passGarmony == null)
                 return NotFound("Error in log in");
-            Dictionary<string, string> data = new Dictionary<string, string>();
-            data["email"] = passGarmony.Login;
-            data["pass"] = passGarmony.Password;
-            data["action"] = "login";
-            JsonElement json = await fetch(data);
-            string token = json.GetString();
-            data.Clear();
+            switch (recordCurrent.Room.Area.Servis) 
+			{
+				case "ASH":
+					{
+                        
+                        string token = await ASHRequests.ASHToken(passGarmony);
+						string userId = await ASHRequests.ASHMe(token);
+                        if (await ASHRequests.ASHdelete(token, userId, recordCurrent))
+                        {
+                            _context.RecordCurrents.Remove(recordCurrent);
+                            await _context.SaveChangesAsync();
+                            return NoContent();
+                        }
+                        return Problem("Не получилось отменить запись");
+                    }
+					break;
+				case "SoulHelp":
+					{
+                        JObject response = await SoulHelp.SoulHelp_RequestApp();
+                        string appId = response.Value<string>("id");
+                        string appSecret = response.Value<string>("appSecret");
+                        response = await SoulHelp.SoulHelpLogin(appId, appSecret, passGarmony);
+                        string token = response["accessToken"].ToString();
+						if (await SoulHelp.SoulHelpCancel(appId, appSecret, token, recordCurrent.ServiceRecord))
+						{
+                            _context.RecordCurrents.Remove(recordCurrent);
+                            await _context.SaveChangesAsync();
+                            return NoContent();
+                        }
+                        return Problem("Не получилось отменить запись");
+                    }
+					break;
+				default:
+					return BadRequest("Не найдено такого сервиса!");
 
-            //Получение данных о пользователе.
-            data["token"] = token;
-            data["action"] = "me";
-            json = await fetch(data);
-            int userID = json.GetProperty("id").GetInt32();
-            data.Clear();
+			}
+
+			#region ASH
+			//Получение токена
+			
+
+			//Получение данных о пользователе.
 
             //Отмена брони
-            data["id"] = id.ToString();
-            data["user_id"] = userID.ToString();
-            data["token"] = token;
-            data["action"] = "unlock";
-            json = await fetch(data);
-			if (json.GetBoolean()) 
-			{
-                _context.RecordCurrents.Remove(recordCurrent);
-                await _context.SaveChangesAsync();
-
-                return NoContent();
-            }
-			return Problem("Не получилось отменить запись");
-
+            
+			
+			#endregion
 		}
 
 		// DELETE: api/RecordCurrents/user/5
@@ -213,7 +236,7 @@ namespace UIR_Service_B.Controllers
 			return (_context.RecordCurrents?.Any(e => e.RecordId == id)).GetValueOrDefault();
 		}
 
-        private async Task<JsonElement> fetch(Dictionary<string, string> data)
+        private async Task<JObject> POSTrequestASH(Dictionary<string, string> data)
         {
             using var client = new HttpClient();
             var content = new FormUrlEncodedContent(data);
@@ -232,13 +255,11 @@ namespace UIR_Service_B.Controllers
             var response = await client.SendAsync(request);
 			try
 			{
-				var stream = await response.Content.ReadAsStreamAsync();
-				var document = await JsonDocument.ParseAsync(stream);
-				return document.RootElement.GetProperty("result");
+				return JObject.Parse(await response.Content.ReadAsStringAsync());
 			}
 			catch (Exception ex)
 			{
-				return System.Text.Json.JsonSerializer.SerializeToElement(ex.Message);
+				return JObject.Parse(ex.Message);
 			}
         }
     }

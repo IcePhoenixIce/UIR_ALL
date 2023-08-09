@@ -1,6 +1,6 @@
 ﻿using WebAppBlazor.Data.Models;
 
-namespace WebAppBlazor.Services
+namespace WebAppBlazor.Services.ServiceA
 {
     public interface IPassesServiceA
     {

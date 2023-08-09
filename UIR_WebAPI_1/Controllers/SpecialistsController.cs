@@ -59,14 +59,14 @@ namespace UIR_WebAPI_1.Controllers
 
         // GET: api/Specialists/Shedule/4
         [HttpGet("Shedule/{id}")]
-        public async Task<ActionResult<(Specialist, IDictionary<DateTime, IEnumerable<RecordService>>)>> GetAppointmentCurrentSpec(int id)
+        public async Task<ActionResult<IEnumerable<RecordService>>> GetAppointmentCurrentSpec(int id)
         {
             var spec = await _context.Specialists
-                .Include(spec => spec.AppointmentCurrents)
+                .Include(spec => spec.AppointmentCurrents.OrderBy(a => a.From1))
                 .Include(spec => spec.SheduleTables).Where(spec => spec.SpecialistId == id).FirstOrDefaultAsync();
             if (spec == null)
                 return NotFound();
-            Dictionary<DateTime, IEnumerable<RecordService>> recordsServices = new Dictionary<DateTime, IEnumerable<RecordService>>();
+            List<RecordService> recordsServices = new List<RecordService>();
             DateTime date = DateTime.Now.Date;
 
             for (int i = 0; i < 7; i++)
@@ -87,15 +87,13 @@ namespace UIR_WebAPI_1.Controllers
                     };
                     flag = true;
                 }
-                recordsServices.Add(date, CreateShedule(curShedule, date, flag));
+                recordsServices.AddRange(CreateShedule(curShedule, date, flag));
                 date = date.AddDays(1);
             }
             //Потом уже учет сушествующих записей. Их просчет на основе времени для прямого обращения.
             foreach (var appointment in spec.AppointmentCurrents)
             {
-                if (!recordsServices.ContainsKey(appointment.From1.Date))
-                    continue;
-                foreach (var record in recordsServices[appointment.From1.Date])
+                foreach (var record in recordsServices)
                 {
                     if (record.From1 == appointment.From1)
                     {
@@ -105,7 +103,7 @@ namespace UIR_WebAPI_1.Controllers
                 }
             }
 
-            return (spec, recordsServices);
+            return recordsServices;
         }
 
         // PUT: api/Specialists/5

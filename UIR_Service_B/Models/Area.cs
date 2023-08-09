@@ -11,6 +11,10 @@ public partial class Area
 
     public string AreaLocation { get; set; } = null!;
 
+    public string Servis { get; set; }
+
+    public string? AdditionalInfo { get; set; }
+
     public TimeSpan From1 { get; set; }
 
     public TimeSpan To1 { get; set; }

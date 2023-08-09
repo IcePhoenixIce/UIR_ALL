@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using Blazored.LocalStorage;
 using Radzen.Blazor.Rendering;
 
-namespace WebAppBlazor.Services
+namespace WebAppBlazor.Services.ServiceB
 {
     public class RecordsCurrentService : IRecordsCurrentService
     {
@@ -51,7 +51,7 @@ namespace WebAppBlazor.Services
             throw new Exception("ServerError!");
         }
 
-        public async Task<RecordCurrent?> PostRecordAsync(RecordCurrent record)
+        public async Task<bool> PostRecordAsync(RecordCurrent record)
         {
             string serializeAppointment = JsonConvert.SerializeObject(record);
             var requstMassage = new HttpRequestMessage(HttpMethod.Post, "User");
@@ -61,12 +61,9 @@ namespace WebAppBlazor.Services
             requstMassage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json-patch+json");
             var response = await _httpClient.SendAsync(requstMassage);
             if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            {
-                var responseBody = await response.Content.ReadAsStringAsync();
-                var returned_user = JsonConvert.DeserializeObject<RecordCurrent>(responseBody);
-                return await Task.FromResult(returned_user);
-            }
-            return null;
+                return true;
+            throw new Exception("Ошибка при попытке записи!");
+            return false;
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -76,10 +73,10 @@ namespace WebAppBlazor.Services
             requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
             var response = await _httpClient.SendAsync(requstMassage);
-            var responseStatusCode = response.StatusCode;
-            if (responseStatusCode == System.Net.HttpStatusCode.NoContent)
+            if (response.IsSuccessStatusCode)
                 return true;
-            throw new Exception("ServerError!");
+            return false;
+            //throw new Exception("ServerError!");
         }
     }
 }

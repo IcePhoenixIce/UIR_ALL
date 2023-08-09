@@ -4,22 +4,22 @@ using WebAppBlazor.Data.Models;
 using System.Security.Cryptography;
 using Blazored.LocalStorage;
 
-namespace WebAppBlazor.Services
+namespace WebAppBlazor.Services.ServiceB
 {
-    public class RoomService : IRoomService
-	{
+    public class AreaService : IAreaService
+    {
         private HttpClient _httpClient { get; }
-		private ILocalStorageService _localStorageService { get; }
+        private ILocalStorageService _localStorageService { get; }
 
-        public RoomService(HttpClient httpClient, ILocalStorageService localStorageService) 
-        { 
+        public AreaService(HttpClient httpClient, ILocalStorageService localStorageService)
+        {
             _httpClient = httpClient;
-			_localStorageService = localStorageService;
+            _localStorageService = localStorageService;
         }
 
-        public async Task<ICollection<Room>?> RoomsAsync(int areaId)
+        public async Task<IEnumerable<Area>?> AreasAsync()
         {
-            var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"{areaId}");
+            var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"Areas");
             var token = await _localStorageService.GetItemAsync<string>("tokenB");
             requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -28,15 +28,15 @@ namespace WebAppBlazor.Services
             if (responseStatusCode == System.Net.HttpStatusCode.OK)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
-                var returned_user = JsonConvert.DeserializeObject<List<Room>?>(responseBody);
+                var returned_user = JsonConvert.DeserializeObject<List<Area>?>(responseBody);
                 return await Task.FromResult(returned_user);
             }
-            throw new NotImplementedException();
+            throw new Exception("ServerError!");
         }
 
-        public async Task<(Room, IDictionary<DateTime, IEnumerable<RecordService>>)?> RoomAsync(int id)
+        public async Task<Area?> AreaAsync(int id)
         {
-            var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"Room/{id}");
+            var requstMassage = new HttpRequestMessage(HttpMethod.Get, $"Areas/{id}");
             var token = await _localStorageService.GetItemAsync<string>("tokenB");
             requstMassage.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -45,10 +45,10 @@ namespace WebAppBlazor.Services
             if (responseStatusCode == System.Net.HttpStatusCode.OK)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
-                var returned_user = JsonConvert.DeserializeObject<(Room, IDictionary<DateTime, IEnumerable<RecordService>>)?>(responseBody);
+                var returned_user = JsonConvert.DeserializeObject<Area?>(responseBody);
                 return await Task.FromResult(returned_user);
             }
-            throw new NotImplementedException();
+            throw new Exception("ServerError!");
         }
     }
 }

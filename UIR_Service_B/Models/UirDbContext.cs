@@ -60,6 +60,12 @@ public partial class UirDbContext : DbContext
                 .HasColumnName("Area_Name");
             entity.Property(e => e.From1).HasPrecision(0);
             entity.Property(e => e.To1).HasPrecision(0);
+            entity.Property(e => e.Servis)
+                .IsUnicode(true)
+                .HasColumnName("Servis");
+            entity.Property(e => e.AdditionalInfo)
+                .IsUnicode(true)
+                .HasColumnName("AdditionalInfo");
         });
 
         modelBuilder.Entity<InvitesCurrent>(entity =>
@@ -144,14 +150,19 @@ public partial class UirDbContext : DbContext
                 .HasColumnName("Specialist_ID");
             entity.Property(e => e.Password)
                 .HasMaxLength(2000)
-                .IsUnicode(false)
+                .IsUnicode(true)
                 .HasColumnName("Password");
             entity.Property(e => e.Login)
                 .HasMaxLength(2000)
-                .IsUnicode(false)
+                .IsUnicode(true)
                 .HasColumnName("Login");
 
-            entity.HasOne(d => d.UserUir).WithOne(p => p.PassGarmony)
+			entity.Property(e => e.Servis).HasMaxLength(2000)
+				.IsUnicode(true)
+				.HasColumnName("Servis");
+
+
+			entity.HasOne(d => d.UserUir).WithOne(p => p.PassGarmony)
                 .HasForeignKey<PassGarmony>(d => d.UserUirId)
                 .HasConstraintName("FK_Pass_Garmony_Specialist");
         });
@@ -171,11 +182,12 @@ public partial class UirDbContext : DbContext
 
             entity.ToTable("Record_Current");
 
-            entity.Property(e => e.RecordId).ValueGeneratedNever().HasColumnName("Record_ID");
+            entity.Property(e => e.RecordId).HasColumnName("Record_ID");
             entity.Property(e => e.RoomId).HasColumnName("Room_ID");
             entity.Property(e => e.UserUirId).HasColumnName("UserUIR_ID");
             entity.Property(e => e.From1).HasColumnType("datetime");
             entity.Property(e => e.To1).HasColumnType("datetime");
+            entity.Property(e => e.ServiceRecord).HasColumnName("serviceRecordId");
 
             entity.HasOne(d => d.Room).WithMany(p => p.RecordCurrents)
                 .HasForeignKey(d => d.RoomId)
@@ -201,8 +213,9 @@ public partial class UirDbContext : DbContext
             entity.Property(e => e.UserUirId).HasColumnName("UserUIR_ID");
             entity.Property(e => e.From1).HasColumnType("datetime");
             entity.Property(e => e.To1).HasColumnType("datetime");
+			entity.Property(e => e.ServiceRecord).HasColumnName("serviceRecord");
 
-            entity.HasOne(d => d.Rating).WithMany(p => p.RecordEndeds)
+			entity.HasOne(d => d.Rating).WithMany(p => p.RecordEndeds)
                 .HasForeignKey(d => d.RatingId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("R_33");

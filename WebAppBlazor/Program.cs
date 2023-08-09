@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Components.Web;
 using Radzen;
 using WebAppBlazor.Data;
 using WebAppBlazor.Services;
+using WebAppBlazor.Services.ServiceA;
+using WebAppBlazor.Services.ServiceB;
 using static System.Net.WebRequestMethods;
 
 
